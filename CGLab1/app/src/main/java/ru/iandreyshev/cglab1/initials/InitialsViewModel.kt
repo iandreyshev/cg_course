@@ -8,10 +8,10 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-private const val GRAVITATION_CONSTANT = 25f
-private const val LETTER_1_JUMP_VELOCITY = 40f
-private const val LETTER_2_JUMP_VELOCITY = 30f
-private const val LETTER_3_JUMP_VELOCITY = 20f
+private const val GRAVITATION_CONSTANT = 1000f
+private const val LETTER_1_JUMP_VELOCITY = 2000f
+private const val LETTER_2_JUMP_VELOCITY = 1500f
+private const val LETTER_3_JUMP_VELOCITY = 1000f
 
 class InitialsViewModel(
     private val screenWidth: Int,
@@ -44,7 +44,7 @@ class InitialsViewModel(
 
             while (true) {
                 val currentTickTime = System.currentTimeMillis()
-                val elapsedTime = currentTickTime - lastTickTime
+                val elapsedTime = (currentTickTime - lastTickTime) / 1000f
                 doTick(elapsedTime)
                 delay(MILLIS_IN_SEC / MAX_FPS)
                 lastTickTime = currentTickTime
@@ -52,7 +52,7 @@ class InitialsViewModel(
         }
     }
 
-    private fun doTick(elapsedTime: Long) {
+    private fun doTick(elapsedTime: Float) {
         _state.update {
             it.copy(
                 letter1 = doLetterTick(elapsedTime, it.letter1, LETTER_1_JUMP_VELOCITY),
@@ -62,9 +62,9 @@ class InitialsViewModel(
         }
     }
 
-    private fun doLetterTick(elapsedTime: Long, letter: InitialsLetter, jumpVelocity: Float): InitialsLetter {
-        var newVelocity = letter.velocity + GRAVITATION_CONSTANT * (elapsedTime / 1000f)
-        var newYPosition = letter.yPosition + letter.velocity
+    private fun doLetterTick(elapsedTime: Float, letter: InitialsLetter, jumpVelocity: Float): InitialsLetter {
+        var newVelocity = letter.velocity + GRAVITATION_CONSTANT * elapsedTime
+        var newYPosition = letter.yPosition + letter.velocity * elapsedTime
 
         if (newYPosition + LETTER_HEIGHT > screenHeight) {
             newVelocity = -jumpVelocity

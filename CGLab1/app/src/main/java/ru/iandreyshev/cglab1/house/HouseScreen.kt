@@ -15,6 +15,7 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.DrawStyle
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.lifecycle.viewmodel.compose.viewModel
 
@@ -44,7 +45,14 @@ fun HouseScreen(
         drawGround()
         drawFence()
         drawFlag()
-        drawHouse(state)
+
+        translate(state.posX, state.posY) {
+            drawHouse(hasNozzle = state.isDrag)
+        }
+
+        translate(state.posX + 600f, state.posY) {
+            drawHouse(hasNozzle = state.isDrag)
+        }
     }
 }
 
@@ -69,63 +77,61 @@ private fun DrawScope.drawGround() {
     drawCircle(brush, center = groundCenter, radius = 2000f)
 }
 
-private fun DrawScope.drawHouse(state: HouseState) {
-    drawNozzle(state)
+// Задавать матрицу трансформации чтобы не прибавлять везде плюсы
+private fun DrawScope.drawHouse(hasNozzle: Boolean) {
+        if (hasNozzle) {
+            drawNozzle()
+        }
 
-    drawRect(Color(0xFFC97C05), topLeft = Offset(state.posX, state.posY), size = Size(350f, 180f))
+        drawRect(Color(0xFFC97C05), topLeft = Offset.Zero, size = Size(350f, 180f))
 
-    val path = Path()
-    path.moveTo(state.posX - 60f, state.posY)
-    path.lineTo(state.posX + 350f / 2, state.posY - 150f)
-    path.lineTo(state.posX + 350f + 60f, state.posY)
-    path.lineTo(state.posX - 60f, state.posY)
-    path.close()
-    drawPath(path, Color(0xFF6B6B6B))
+        val path = Path()
+        path.moveTo(-60f, 0f)
+        path.lineTo(350f / 2, -150f)
+        path.lineTo(350f + 60f, 0f)
+        path.lineTo(-60f, 0f)
+        path.close()
+        drawPath(path, Color(0xFF6B6B6B))
 
-    drawRect(Color.Cyan, topLeft = Offset(state.posX + 40f, state.posY + 40f), size = Size(60f, 75f))
+        drawRect(Color.Cyan, topLeft = Offset(40f, 40f), size = Size(60f, 75f))
+        drawRect(Color.Cyan, topLeft = Offset(140f, 40f), size = Size(60f, 75f))
 
-    drawRect(Color.Cyan, topLeft = Offset(state.posX + 140f, state.posY + 40f), size = Size(60f, 75f))
+        drawRect(Color.DarkGray, topLeft = Offset(240f, 40f), size = Size(60f, 180f - 40f))
+        drawCircle(Color.LightGray, center = Offset(260f, 120f), radius = 6f)
 
-    drawRect(Color.DarkGray, topLeft = Offset(state.posX + 240f, state.posY + 40f), size = Size(60f, 180f - 40f))
-    drawCircle(Color.LightGray, center = Offset(state.posX + 260f, state.posY + 120f), radius = 6f)
+        drawCircle(Color.LightGray, center = Offset(70f, -120f), radius = 25f)
+        drawCircle(Color.LightGray, center = Offset(60f, -140f), radius = 22f)
+        drawCircle(Color.LightGray, center = Offset(45f, -165f), radius = 19f)
+        drawCircle(Color.LightGray, center = Offset(25f, -195f), radius = 16f)
+        drawCircle(Color.LightGray, center = Offset(0f, -230f), radius = 13f)
 
-    drawCircle(Color.LightGray, center = Offset(state.posX + 70f, state.posY - 120f), radius = 25f)
-    drawCircle(Color.LightGray, center = Offset(state.posX + 60f, state.posY - 140f), radius = 22f)
-    drawCircle(Color.LightGray, center = Offset(state.posX + 45f, state.posY - 165f), radius = 19f)
-    drawCircle(Color.LightGray, center = Offset(state.posX + 25f, state.posY - 195f), radius = 16f)
-    drawCircle(Color.LightGray, center = Offset(state.posX + 0f, state.posY - 230f), radius = 13f)
-
-    drawRect(Color(0xFF4A4D47), topLeft = Offset(state.posX + 60f, state.posY - 120f), size = Size(30f, 60f))
+        drawRect(Color(0xFF4A4D47), topLeft = Offset(60f, - 120f), size = Size(30f, 60f))
 }
 
-private fun DrawScope.drawNozzle(state: HouseState) {
-    if (!state.isDrag) {
-        return
-    }
-
+private fun DrawScope.drawNozzle() {
     val nozzlePath = Path()
-    nozzlePath.moveTo(state.posX + 350f / 2, state.posY + 50f)
-    nozzlePath.lineTo(state.posX + 350f / 2 + 60f, state.posY + 240f)
-    nozzlePath.lineTo(state.posX + 350f / 2 - 60f, state.posY + 240f)
-    nozzlePath.lineTo(state.posX + 175f, state.posY + 50f)
+    nozzlePath.moveTo(350f / 2, 50f)
+    nozzlePath.lineTo(350f / 2 + 60f, 240f)
+    nozzlePath.lineTo(350f / 2 - 60f, 240f)
+    nozzlePath.lineTo(175f, 50f)
     nozzlePath.close()
     drawPath(nozzlePath, Color(0xF0C7C7C7))
 
 
     val flamePath1 = Path()
-    flamePath1.moveTo(state.posX + 350f / 2 + 50f, state.posY + 240f)
-    flamePath1.lineTo(state.posX + 350f / 2, state.posY + 330f)
-    flamePath1.lineTo(state.posX + 350f / 2 - 50f, state.posY + 240f)
-    flamePath1.lineTo(state.posX + 350f / 2 + 50f, state.posY + 240f)
+    flamePath1.moveTo(350f / 2 + 50f, 240f)
+    flamePath1.lineTo(350f / 2, 330f)
+    flamePath1.lineTo(350f / 2 - 50f, 240f)
+    flamePath1.lineTo(350f / 2 + 50f, 240f)
     flamePath1.close()
     drawPath(flamePath1, Color(0xF0FFDC21))
 
 
     val flamePath2 = Path()
-    flamePath2.moveTo(state.posX + 350f / 2 + 30f, state.posY + 240f)
-    flamePath2.lineTo(state.posX + 350f / 2, state.posY + 300f)
-    flamePath2.lineTo(state.posX + 350f / 2 - 30f, state.posY + 240f)
-    flamePath2.lineTo(state.posX + 350f / 2 + 30f, state.posY + 240f)
+    flamePath2.moveTo(350f / 2 + 30f, 240f)
+    flamePath2.lineTo(350f / 2, 300f)
+    flamePath2.lineTo(350f / 2 - 30f, 240f)
+    flamePath2.lineTo(350f / 2 + 30f, 240f)
     flamePath2.close()
     drawPath(flamePath2, Color(0xF0FA532A))
 }

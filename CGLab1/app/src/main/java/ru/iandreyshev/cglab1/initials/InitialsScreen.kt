@@ -12,6 +12,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.core.graphics.translationMatrix
 
 const val CANVAS_PADDING = 100f
 const val LETTERS_GUTTER = 60f
