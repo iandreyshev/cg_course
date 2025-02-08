@@ -17,7 +17,7 @@ const val CANVAS_PADDING = 100f
 const val LETTERS_GUTTER = 60f
 
 const val LETTER_HEIGHT = 360f
-const val ELEMENT_WIDTH = 50f
+const val LINE_WIDTH = 50f
 
 @Composable
 fun InitialsScreen(
@@ -47,61 +47,61 @@ private fun DrawScope.drawBackground() {
 private fun DrawScope.drawLetter1(letter: InitialsLetter) {
     val color = Color.White
     val topLeft = Offset(letter.xPosition, letter.yPosition)
-    drawRect(color, topLeft = topLeft, size = Size(ELEMENT_WIDTH, LETTER_HEIGHT))
+    drawRect(color, topLeft = topLeft, size = Size(LINE_WIDTH, LETTER_HEIGHT))
 
-    drawRect(color, topLeft = topLeft, size = Size(letter.width, ELEMENT_WIDTH))
+    drawRect(color, topLeft = topLeft, size = Size(letter.width, LINE_WIDTH))
 
     drawRect(
         color,
-        topLeft = Offset(topLeft.x + letter.width - ELEMENT_WIDTH, topLeft.y),
-        size = Size(ELEMENT_WIDTH, LETTER_HEIGHT)
+        topLeft = Offset(topLeft.x + letter.width - LINE_WIDTH, topLeft.y),
+        size = Size(LINE_WIDTH, LETTER_HEIGHT)
     )
 
     drawRect(
         color,
         topLeft = Offset(letter.xPosition, letter.yPosition + LETTER_HEIGHT / 2),
-        size = Size(letter.width, ELEMENT_WIDTH)
+        size = Size(letter.width, LINE_WIDTH)
     )
 }
 
 private fun DrawScope.drawLetter2(letter: InitialsLetter) {
     val color = Color.Blue
     val topLeft = Offset(letter.xPosition, letter.yPosition)
-    drawRect(color, topLeft = topLeft, size = Size(ELEMENT_WIDTH, LETTER_HEIGHT))
+    drawRect(color, topLeft = topLeft, size = Size(LINE_WIDTH, LETTER_HEIGHT))
 
     val path = Path()
     path.moveTo(letter.xPosition, letter.yPosition + LETTER_HEIGHT)
-    path.lineTo(letter.xPosition + ELEMENT_WIDTH, letter.yPosition + LETTER_HEIGHT)
+    path.lineTo(letter.xPosition + LINE_WIDTH, letter.yPosition + LETTER_HEIGHT)
     path.lineTo(letter.xPosition + letter.width, letter.yPosition)
-    path.lineTo(letter.xPosition + letter.width - ELEMENT_WIDTH, letter.yPosition)
+    path.lineTo(letter.xPosition + letter.width - LINE_WIDTH, letter.yPosition)
     path.lineTo(letter.xPosition, letter.yPosition + LETTER_HEIGHT)
     path.close()
     drawPath(path, color)
 
     drawRect(
         color,
-        topLeft = Offset(topLeft.x + letter.width - ELEMENT_WIDTH, topLeft.y),
-        size = Size(ELEMENT_WIDTH, LETTER_HEIGHT)
+        topLeft = Offset(topLeft.x + letter.width - LINE_WIDTH, topLeft.y),
+        size = Size(LINE_WIDTH, LETTER_HEIGHT)
     )
 }
 
 private fun DrawScope.drawLetter3(letter: InitialsLetter) {
     val color = Color.Red
     val topLeft = Offset(letter.xPosition, letter.yPosition)
-    drawRect(color, topLeft = topLeft, size = Size(ELEMENT_WIDTH, LETTER_HEIGHT))
+    drawRect(color, topLeft = topLeft, size = Size(LINE_WIDTH, LETTER_HEIGHT))
 
     val path = Path()
     path.moveTo(letter.xPosition, letter.yPosition + LETTER_HEIGHT)
-    path.lineTo(letter.xPosition + ELEMENT_WIDTH, letter.yPosition + LETTER_HEIGHT)
+    path.lineTo(letter.xPosition + LINE_WIDTH, letter.yPosition + LETTER_HEIGHT)
     path.lineTo(letter.xPosition + letter.width, letter.yPosition)
-    path.lineTo(letter.xPosition + letter.width - ELEMENT_WIDTH, letter.yPosition)
+    path.lineTo(letter.xPosition + letter.width - LINE_WIDTH, letter.yPosition)
     path.lineTo(letter.xPosition, letter.yPosition + LETTER_HEIGHT)
     path.close()
     drawPath(path, color)
 
     drawRect(
         color,
-        topLeft = Offset(topLeft.x + letter.width - ELEMENT_WIDTH, topLeft.y),
-        size = Size(ELEMENT_WIDTH, LETTER_HEIGHT)
+        topLeft = Offset(topLeft.x + letter.width - LINE_WIDTH, topLeft.y),
+        size = Size(LINE_WIDTH, LETTER_HEIGHT)
     )
 }

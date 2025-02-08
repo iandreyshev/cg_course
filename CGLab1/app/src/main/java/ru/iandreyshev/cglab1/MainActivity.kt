@@ -13,8 +13,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import kotlinx.serialization.Serializable
+import ru.iandreyshev.cglab1.hangman.HangmanScreen
 import ru.iandreyshev.cglab1.house.HouseScreen
-import ru.iandreyshev.cglab1.house.HouseViewModel
 import ru.iandreyshev.cglab1.initials.InitialsScreen
 import ru.iandreyshev.cglab1.initials.InitialsViewModel
 import ru.iandreyshev.cglab1.menu.MenuScreen
@@ -41,12 +41,14 @@ object Initials
 @Serializable
 object House
 
+@Serializable
+object Hangman
+
 @Composable
 fun MyAppNavHost(
     modifier: Modifier = Modifier,
-    navController: NavHostController = rememberNavController(),
-
-    ) {
+    navController: NavHostController = rememberNavController()
+) {
     NavHost(
         modifier = modifier,
         navController = navController,
@@ -55,7 +57,8 @@ fun MyAppNavHost(
         composable<Menu> {
             MenuScreen(
                 onNavigateToInitials = { navController.navigate(route = Initials) },
-                onNavigateToHouse = { navController.navigate(route = House) }
+                onNavigateToHouse = { navController.navigate(route = House) },
+                onNavigateToHangman = { navController.navigate(route = Hangman) }
             )
         }
 
@@ -73,6 +76,10 @@ fun MyAppNavHost(
 
         composable<House> {
             HouseScreen()
+        }
+
+        composable<Hangman> {
+            HangmanScreen()
         }
     }
 }

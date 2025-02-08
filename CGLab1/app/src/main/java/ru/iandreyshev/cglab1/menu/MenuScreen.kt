@@ -20,7 +20,8 @@ import ru.iandreyshev.cglab1.system.CGLab1Theme
 @Composable
 fun MenuScreen(
     onNavigateToInitials: () -> Unit = {},
-    onNavigateToHouse: () -> Unit = {}
+    onNavigateToHouse: () -> Unit = {},
+    onNavigateToHangman: () -> Unit = {}
 ) {
     val context = LocalContext.current
     Column(
@@ -44,9 +45,7 @@ fun MenuScreen(
             Text("Задание 3: Рисование окружности")
         }
         Spacer(modifier = Modifier.height(4.dp))
-        Button(onClick = {
-            Toast.makeText(context, "Ещё в разработке", Toast.LENGTH_SHORT).show()
-        }) {
+        Button(onNavigateToHangman) {
             Text("Задание 4: Игра \"Висилица\"")
         }
     }

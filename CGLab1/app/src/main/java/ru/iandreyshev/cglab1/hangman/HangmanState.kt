@@ -1,9 +1,25 @@
 package ru.iandreyshev.cglab1.hangman
 
+const val MAX_BAD_LETTERS = 7
+
 data class HangmanState(
+    val gameState: GameState = GameState.PLAYING,
     val theme: Theme = Theme.NORMAL,
-    val letters: List<Letter> = listOf()
-)
+    val roundInfo: RoundInfo = RoundInfo(),
+    val letters: Map<Char, Letter> = emptyMap(),
+) {
+
+    val goodUsedLetters = letters.filter { it.value.state == LetterState.GOOD_USED }
+    val badUsedLetters = letters.filter { it.value.state == LetterState.BAD_USED }
+    val usedLetters = goodUsedLetters + badUsedLetters
+
+}
+
+enum class GameState {
+    PLAYING,
+    FINISHED_WIN,
+    FINISHED_LOSE;
+}
 
 enum class Theme {
     NORMAL,
@@ -15,8 +31,13 @@ data class Letter(
     val state: LetterState,
 )
 
+data class RoundInfo(
+    val word: String = "",
+    val clue: String = ""
+)
+
 enum class LetterState {
     UNUSED,
-    USED_GOOD,
-    USED_BAD,
+    GOOD_USED,
+    BAD_USED,
 }
