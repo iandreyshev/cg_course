@@ -50,7 +50,7 @@ fun MyAppNavHost(
     NavHost(
         modifier = modifier,
         navController = navController,
-        startDestination = House
+        startDestination = Menu
     ) {
         composable<Menu> {
             MenuScreen(

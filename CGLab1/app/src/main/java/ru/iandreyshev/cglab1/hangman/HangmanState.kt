@@ -1,8 +1,8 @@
 package ru.iandreyshev.cglab1.hangman
 
 data class HangmanState(
-    val theme: Theme,
-    val letters: List<Letter>
+    val theme: Theme = Theme.NORMAL,
+    val letters: List<Letter> = listOf()
 )
 
 enum class Theme {
