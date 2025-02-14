@@ -18,6 +18,7 @@ import ru.iandreyshev.cglab1.house.HouseScreen
 import ru.iandreyshev.cglab1.initials.InitialsScreen
 import ru.iandreyshev.cglab1.initials.InitialsViewModel
 import ru.iandreyshev.cglab1.menu.MenuScreen
+import ru.iandreyshev.cglab1.bresenhamCircle.BresenhamCircleScreen
 import ru.iandreyshev.cglab1.system.CGLab1Theme
 
 class MainActivity : ComponentActivity() {
@@ -42,6 +43,9 @@ object Initials
 object House
 
 @Serializable
+object BresenhamCircle
+
+@Serializable
 object Hangman
 
 @Composable
@@ -58,6 +62,7 @@ fun MyAppNavHost(
             MenuScreen(
                 onNavigateToInitials = { navController.navigate(route = Initials) },
                 onNavigateToHouse = { navController.navigate(route = House) },
+                onNavigateToBresenhamCircle = { navController.navigate(route = BresenhamCircle) },
                 onNavigateToHangman = { navController.navigate(route = Hangman) }
             )
         }
@@ -78,8 +83,14 @@ fun MyAppNavHost(
             HouseScreen()
         }
 
+        composable<BresenhamCircle> {
+            BresenhamCircleScreen()
+        }
+
         composable<Hangman> {
-            HangmanScreen()
+            HangmanScreen(onNavigateToMenu = {
+                navController.popBackStack()
+            })
         }
     }
 }

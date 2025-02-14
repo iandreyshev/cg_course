@@ -7,11 +7,13 @@ data class HangmanState(
     val theme: Theme = Theme.NORMAL,
     val roundInfo: RoundInfo = RoundInfo(),
     val letters: Map<Char, Letter> = emptyMap(),
+    val history: List<Letter> = emptyList()
 ) {
 
     val goodUsedLetters = letters.filter { it.value.state == LetterState.GOOD_USED }
     val badUsedLetters = letters.filter { it.value.state == LetterState.BAD_USED }
     val usedLetters = goodUsedLetters + badUsedLetters
+    val lettersToWin = roundInfo.wordUniqueLettersCount
 
 }
 
@@ -34,7 +36,9 @@ data class Letter(
 data class RoundInfo(
     val word: String = "",
     val clue: String = ""
-)
+) {
+    val wordUniqueLettersCount = word.toSet().count()
+}
 
 enum class LetterState {
     UNUSED,

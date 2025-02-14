@@ -1,6 +1,5 @@
 package ru.iandreyshev.cglab1.menu
 
-import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -21,6 +20,7 @@ import ru.iandreyshev.cglab1.system.CGLab1Theme
 fun MenuScreen(
     onNavigateToInitials: () -> Unit = {},
     onNavigateToHouse: () -> Unit = {},
+    onNavigateToBresenhamCircle: () -> Unit = {},
     onNavigateToHangman: () -> Unit = {}
 ) {
     val context = LocalContext.current
@@ -39,9 +39,7 @@ fun MenuScreen(
             Text("Задание 2: Домик в деревне")
         }
         Spacer(modifier = Modifier.height(4.dp))
-        Button(onClick = {
-            Toast.makeText(context, "Ещё в разработке", Toast.LENGTH_SHORT).show()
-        }) {
+        Button(onNavigateToBresenhamCircle) {
             Text("Задание 3: Рисование окружности")
         }
         Spacer(modifier = Modifier.height(4.dp))

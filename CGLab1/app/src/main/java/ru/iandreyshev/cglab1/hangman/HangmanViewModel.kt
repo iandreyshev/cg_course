@@ -18,18 +18,31 @@ class HangmanViewModel : ViewModel() {
         val currState = _state.value
         val newCh = char.uppercaseChar()
 
-        if (currState.usedLetters.contains(newCh)) {
+        if (currState.usedLetters.contains(newCh) || !currState.letters.containsKey(newCh)) {
             return
         }
 
         val newLettersMap = currState.letters.toMutableMap()
-        newLettersMap[newCh] = Letter(newCh, when {
-            currState.roundInfo.word.contains(newCh) -> LetterState.GOOD_USED
-            else -> LetterState.BAD_USED
-        })
+        val newLetter = Letter(
+            newCh, when {
+                currState.roundInfo.word.contains(newCh) -> LetterState.GOOD_USED
+                else -> LetterState.BAD_USED
+            }
+        )
+        newLettersMap[newCh] = newLetter
 
         _state.update {
-            it.copy(letters = newLettersMap)
+            it.copy(letters = newLettersMap, history = it.history + listOf(newLetter))
+        }
+
+        val newGameState = when {
+            _state.value.badUsedLetters.size == MAX_BAD_LETTERS -> GameState.FINISHED_LOSE
+            _state.value.lettersToWin == _state.value.goodUsedLetters.size -> GameState.FINISHED_WIN
+            else -> GameState.PLAYING
+        }
+
+        _state.update {
+            it.copy(gameState = newGameState)
         }
     }
 
@@ -38,13 +51,23 @@ class HangmanViewModel : ViewModel() {
     }
 
     fun onChangeTheme() {
+        _state.update {
+            it.copy(
+                theme = when (_state.value.theme) {
+                    Theme.NORMAL -> Theme.STRONG
+                    Theme.STRONG -> Theme.NORMAL
+                }
+            )
+        }
     }
 
     private fun initState() {
         _state.update {
             it.copy(
                 letters = LETTERS_RANGE.associateWith { Letter(it.uppercaseChar(), LetterState.UNUSED) },
-                roundInfo = HangmanData.getRandomInfo()
+                roundInfo = HangmanData.getRandomInfo(),
+                gameState = GameState.PLAYING,
+                history = emptyList()
             )
         }
     }
