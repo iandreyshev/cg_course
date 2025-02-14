@@ -46,6 +46,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 
 private const val HORIZONTAL_PADDING = 20
+private const val LETTERS_GUTTER = 20f
 
 @Composable
 fun HangmanScreen(
@@ -57,10 +58,12 @@ fun HangmanScreen(
 
     Canvas(
         modifier = Modifier
-            .background(when(state.theme) {
-                Theme.NORMAL -> Color.White
-                Theme.STRONG -> Color.Black
-            })
+            .background(
+                when (state.theme) {
+                    Theme.NORMAL -> Color.White
+                    Theme.STRONG -> Color.Black
+                }
+            )
             .fillMaxSize()
             .windowInsetsPadding(WindowInsets.systemBars)
     ) {
@@ -80,15 +83,14 @@ fun HangmanScreen(
         GameState.FINISHED_WIN -> {
             AlertDialogExample(
                 title = "Вы выиграли!",
-                text = "Перезапустить игру?",
                 onRestart = viewModel::onRestart,
                 onExit = onNavigateToMenu
             )
         }
+
         GameState.FINISHED_LOSE -> {
             AlertDialogExample(
                 title = "Вы проиграли :(",
-                text = "Перезапустить игру?",
                 onRestart = viewModel::onRestart,
                 onExit = onNavigateToMenu
             )
@@ -157,7 +159,7 @@ fun GameControls(
 @Composable
 fun AlertDialogExample(
     title: String,
-    text: String,
+    text: String = "Перезапустить игру?",
     onExit: () -> Unit = {},
     onRestart: () -> Unit = {},
 ) {
@@ -168,24 +170,14 @@ fun AlertDialogExample(
         text = {
             Text(text = text)
         },
-        onDismissRequest = {
-            onExit()
-        },
+        onDismissRequest = onExit,
         confirmButton = {
-            TextButton(
-                onClick = {
-                    onRestart()
-                }
-            ) {
+            TextButton(onRestart) {
                 Text("Перезапустить")
             }
         },
         dismissButton = {
-            TextButton(
-                onClick = {
-                    onExit()
-                }
-            ) {
+            TextButton(onExit) {
                 Text("Выйти")
             }
         }
@@ -198,16 +190,24 @@ private fun DrawScope.drawNormalTheme(state: HangmanState, textMeasurer: TextMea
         drawWord(state, textMeasurer)
     }
     translate(HORIZONTAL_PADDING.dp.toPx(), 500f) {
-        drawInfo(state, textMeasurer)
+        drawClue(state.roundInfo.clue, textMeasurer, Color.Black)
     }
-    drawLetters(state.letters, textMeasurer)
+    drawLetters(state.letters, textMeasurer, LetterColors.forTheme(Theme.NORMAL))
 }
 
 private fun DrawScope.drawHangman(state: HangmanState) {
-    drawRect(Color.Black, topLeft = Offset(HORIZONTAL_PADDING.dp.toPx(), 20.dp.toPx()), Size(20f, 400f))
-    drawRect(Color.Black, topLeft = Offset(HORIZONTAL_PADDING.dp.toPx(), 20.dp.toPx()), Size(200f, 20f))
+    drawRect(
+        Color.Black,
+        topLeft = Offset(HORIZONTAL_PADDING.dp.toPx(), 20.dp.toPx()),
+        Size(20f, 400f)
+    )
+    drawRect(
+        Color.Black,
+        topLeft = Offset(HORIZONTAL_PADDING.dp.toPx(), 20.dp.toPx()),
+        Size(200f, 20f)
+    )
 
-    val drawHangmanOperations = listOf<() -> Unit>(
+    val drawHangmanOperations = listOf(
         {
             drawRect(Color.Blue, Offset(200f, 20.dp.toPx()), Size(5f, 70f))
         },
@@ -247,54 +247,52 @@ private fun DrawScope.drawHangman(state: HangmanState) {
         },
     )
 
-    drawHangmanOperations.subList(0, state.badUsedLetters.size).forEach {
-        it.invoke()
-    }
+    drawHangmanOperations.subList(0, state.badUsedLetters.size)
+        .forEach { it() }
 }
 
 private fun DrawScope.drawWord(state: HangmanState, textMeasurer: TextMeasurer) {
-    val letters = state.roundInfo.word.mapNotNull {
-        state.letters[it]
-    }
-    val measuredLetters = letters.map {
-        val color = when (it.state) {
-            LetterState.UNUSED -> if (state.theme == Theme.NORMAL) Color.White else Color.Black
-            LetterState.GOOD_USED -> Color.Green
-            LetterState.BAD_USED -> Color.Red
+    var pos = Offset.Zero
+    state.roundInfo.word
+        .mapNotNull { state.letters[it] }
+        .map {
+            val color = when (it.state) {
+                LetterState.UNUSED -> if (state.theme == Theme.NORMAL) Color.White else Color.Black
+                LetterState.GOOD_USED -> Color.Green
+                LetterState.BAD_USED -> Color.Red
+            }
+            val textStyle =
+                TextStyle.Default.copy(
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = color
+                )
+            textMeasurer.measure(it.char.toString(), style = textStyle)
+        }.forEach {
+            drawText(it, topLeft = pos)
+            drawRect(Color.Blue, Offset(pos.x, pos.y + 100f), Size(it.size.width.toFloat(), 5f))
+            pos = Offset(pos.x + LETTERS_GUTTER + it.size.width, pos.y)
         }
-        val textStyle = TextStyle.Default.copy(fontSize = 20.sp, fontWeight = FontWeight.Bold, color = color)
-        textMeasurer.measure(it.char.toString(), style = textStyle)
-    }
-
-    val gutter = 20f
-    var position = Offset.Zero
-    measuredLetters.forEach {
-        drawText(it, topLeft = position)
-        drawRect(Color.Blue, Offset(position.x, position.y + 100f), Size(it.size.width.toFloat(), 5f))
-        position = Offset(position.x + gutter + it.size.width, position.y)
-    }
 }
 
-private fun DrawScope.drawLetters(letters: Map<Char, Letter>, textMeasurer: TextMeasurer) {
-    val measuredLetters = letters.map {
-        val color = when (it.value.state) {
-            LetterState.UNUSED -> Color.Black
-            LetterState.GOOD_USED -> Color.Green
-            LetterState.BAD_USED -> Color.Red
-        }
-        val textStyle = TextStyle.Default.copy(fontSize = 20.sp, fontWeight = FontWeight.Bold, color = color)
-        textMeasurer.measure(it.value.char.toString(), style = textStyle)
-    }
-
-    val gutter = 20f
+private fun DrawScope.drawLetters(
+    letters: Map<Char, Letter>,
+    textMeasurer: TextMeasurer,
+    colors: LetterColors
+) {
     var position = Offset(HORIZONTAL_PADDING.dp.toPx(), 700f)
     val maxX = size.width - HORIZONTAL_PADDING.dp.toPx()
-    measuredLetters.forEach {
-        if (position.x + gutter + it.size.width > maxX) {
+
+    letters.map {
+        val style = TextStyle.Default
+            .copy(fontSize = 20.sp, fontWeight = FontWeight.Bold, color = colors[it.value.state])
+        textMeasurer.measure(it.value.char.toString(), style = style)
+    }.forEach {
+        if (position.x + LETTERS_GUTTER + it.size.width > maxX) {
             position = Offset(HORIZONTAL_PADDING.dp.toPx(), position.y + 100f)
         }
         drawText(it, topLeft = position)
-        position = Offset(position.x + gutter + it.size.width, position.y)
+        position = Offset(position.x + LETTERS_GUTTER + it.size.width, position.y)
     }
 }
 
@@ -303,50 +301,53 @@ private fun DrawScope.drawStrongTheme(state: HangmanState, textMeasurer: TextMea
         drawWord(state, textMeasurer)
     }
     translate(HORIZONTAL_PADDING.dp.toPx(), 100f) {
-        drawInfo(state, textMeasurer)
+        drawClue(state.roundInfo.clue, textMeasurer, Color.White)
     }
-
     drawLettersHistory(state, textMeasurer)
     drawAttemptsCount(state, textMeasurer)
+    drawLetters(state.letters, textMeasurer, LetterColors.forTheme(Theme.STRONG))
 }
 
 private fun DrawScope.drawLettersHistory(state: HangmanState, textMeasurer: TextMeasurer) {
-    val measuredLetters = state.history.map {
-        val color = when (it.state) {
-            LetterState.UNUSED -> Color.Black
-            LetterState.GOOD_USED -> Color.Green
-            LetterState.BAD_USED -> Color.Red
-        }
-        val textStyle = TextStyle.Default.copy(fontSize = 20.sp, fontWeight = FontWeight.Bold, color = color)
-        textMeasurer.measure(it.char.toString(), style = textStyle)
-    }
+    drawText(
+        textMeasurer.measure("История"),
+        topLeft = Offset(HORIZONTAL_PADDING.dp.toPx(), 350f),
+        color = Color.White
+    )
 
-    val measureResult = textMeasurer.measure("История")
-    drawText(measureResult, topLeft = Offset(HORIZONTAL_PADDING.dp.toPx(), 350f), color = Color.White)
-
-    val gutter = 20f
     var position = Offset(HORIZONTAL_PADDING.dp.toPx(), 400f)
     val maxX = size.width - HORIZONTAL_PADDING.dp.toPx()
-    measuredLetters.forEach {
-        if (position.x + gutter + it.size.width > maxX) {
+
+    state.history.map {
+        val color = when (it.state) {
+            LetterState.GOOD_USED -> Color.Green
+            else -> Color.Red
+        }
+        val style =
+            TextStyle.Default.copy(fontSize = 20.sp, fontWeight = FontWeight.Bold, color = color)
+        textMeasurer.measure(it.char.toString(), style = style)
+    }.forEach {
+        if (position.x + LETTERS_GUTTER + it.size.width > maxX) {
             position = Offset(HORIZONTAL_PADDING.dp.toPx(), position.y + 100f)
         }
         drawText(it, topLeft = position)
-        position = Offset(position.x + gutter + it.size.width, position.y)
+        position = Offset(position.x + LETTERS_GUTTER + it.size.width, position.y)
     }
 }
 
 private fun DrawScope.drawAttemptsCount(state: HangmanState, textMeasurer: TextMeasurer) {
-    val attemptsCount = MAX_BAD_LETTERS - state.usedLetters.count()
-    val measureResult = textMeasurer.measure("Осталось попыток: $attemptsCount")
-    drawText(measureResult, topLeft = Offset(HORIZONTAL_PADDING.dp.toPx(), 550f), color = Color.White)
+    drawText(
+        textMeasurer.measure("Осталось попыток: ${MAX_BAD_LETTERS - state.badUsedLetters.count()}"),
+        topLeft = Offset(HORIZONTAL_PADDING.dp.toPx(), 550f),
+        color = Color.White
+    )
 }
 
-private fun DrawScope.drawInfo(state: HangmanState, textMeasurer: TextMeasurer) {
-    val maxWidth = size.width - 2 * HORIZONTAL_PADDING
-    val color = if (state.theme == Theme.NORMAL) Color.Black else Color.White
-    val textStyle = TextStyle.Default.copy(fontSize = 16.sp, color = color)
-    val measureResult =
-        textMeasurer.measure(state.roundInfo.clue, constraints = Constraints(maxWidth = maxWidth.toInt()), style = textStyle)
+private fun DrawScope.drawClue(clue: String, textMeasurer: TextMeasurer, color: Color) {
+    val constraints = Constraints(maxWidth = (size.width - 2 * HORIZONTAL_PADDING).toInt())
+    val style = TextStyle.Default.copy(fontSize = 16.sp, color = color)
+    val measureResult = textMeasurer.measure(clue, constraints = constraints, style = style)
     drawText(measureResult, topLeft = Offset.Zero)
 }
+
+// 374
