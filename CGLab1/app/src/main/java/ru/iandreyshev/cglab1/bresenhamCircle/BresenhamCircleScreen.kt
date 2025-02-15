@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PointMode
 import androidx.compose.ui.graphics.SolidColor
@@ -18,53 +19,42 @@ fun BresenhamCircleScreen() {
             .fillMaxSize()
             .background(Color.Black)
     ) {
-        drawBresenhamCircle(size.width / 2, size.height / 2, 10)
+        drawBresenhamCircle(size.width / 2, size.height / 2, 50)
     }
 }
 
 fun DrawScope.drawBresenhamCircle(centerX: Float, centerY: Float, radius: Int) {
     val brush = SolidColor(Color.White)
-    val pointsToDraw = mutableListOf<Offset>()
 
+    var d = 3 - 2 * radius
     var x = 0
     var y = radius
-    var gap = 0
-    var delta = 2 - 2 * radius
-    var stepNumber = 0
 
-    while (y >= 0) {
-        println("--- Шаг номер $stepNumber ---")
-        println("x = $x")
-        println("y = $y")
-        println("gap = $gap")
-        println("delta = $delta")
-        stepNumber++
+    while (x < y) {
+        val sectors = listOf(
+            Offset(centerX + x, centerY - y),
+            Offset(centerX + y, centerY - x),
+            Offset(centerX + y, centerY + x),
+            Offset(centerX + x, centerY + y),
+            Offset(centerX - x, centerY + y),
+            Offset(centerX - y, centerY + x),
+            Offset(centerX - y, centerY - x),
+            Offset(centerX - x, centerY - y)
+        )
 
-        pointsToDraw.apply {
-            add(Offset(centerX + x, centerY + y))
-            add(Offset(centerX + x, centerY - y))
-            add(Offset(centerX - x, centerY - y))
-            add(Offset(centerX - x, centerY + y))
-            drawPoints(this, PointMode.Points, brush, strokeWidth = 2f)
-            clear()
+        drawPoints(sectors, PointMode.Points, brush, strokeWidth = 1f)
+        drawRect(brush, topLeft = sectors[0], size = Size(1f, (sectors[3] - sectors[0]).y)) // 1-4
+        drawRect(brush, topLeft = sectors[1], size = Size(1f, (sectors[2] - sectors[1]).y)) // 2-3
+        drawRect(brush, topLeft = sectors[4], size = Size(1f, (sectors[7] - sectors[4]).y)) // 5-8
+        drawRect(brush, topLeft = sectors[5], size = Size(1f, (sectors[6] - sectors[5]).y)) // 6-7
+
+        if (d < 0) {
+            d += 4 * x + 6
+            x += 1
+        } else {
+            d += 4 * (x - y) + 10
+            x += 1
+            y -= 1
         }
-
-        gap = 2 * (delta + y) - 1
-
-        if (delta < 0 && gap <= 0) {
-            x++
-            delta += 2 * x + 1
-            continue
-        }
-
-        if (delta > 0 && gap > 0) {
-            y--
-            delta -= 2 * y + 1
-            continue
-        }
-
-        x++
-        delta += 2 * (x - y)
-        y--
     }
 }

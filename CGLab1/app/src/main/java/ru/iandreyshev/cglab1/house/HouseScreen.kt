@@ -46,12 +46,12 @@ fun HouseScreen(
         drawFence()
         drawFlag()
 
-        translate(state.posX, state.posY) {
-            drawHouse(hasNozzle = state.isDrag)
+        translate(state.pos1X, state.pos1Y) {
+            drawHouse(hasNozzle = state.dragState == DragState.DRAG_FIRST)
         }
 
-        translate(state.posX + 600f, state.posY) {
-            drawHouse(hasNozzle = state.isDrag)
+        translate(state.pos2X, state.pos2Y) {
+            drawHouse(hasNozzle = state.dragState == DragState.DRAG_SECOND)
         }
     }
 }
