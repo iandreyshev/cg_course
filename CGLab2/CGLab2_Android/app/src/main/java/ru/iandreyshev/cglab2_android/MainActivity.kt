@@ -1,4 +1,4 @@
-package ru.iandreyshev.cglab1
+package ru.iandreyshev.cglab2_android
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -6,13 +6,19 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import kotlinx.serialization.Serializable
+import ru.iandreyshev.cglab2_android.domain.ElementsStore
+import ru.iandreyshev.cglab2_android.presentation.craft.CraftViewModel
+import ru.iandreyshev.cglab2_android.presentation.list.ElementsListViewModel
 import ru.iandreyshev.cglab2_android.system.CGLab2_AndroidTheme
-import ru.iandreyshev.cglab2_android.ui.CraftScreen
+import ru.iandreyshev.cglab2_android.ui.craft.CraftScreen
+import ru.iandreyshev.cglab2_android.ui.list.ElementsListScreen
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -29,18 +35,46 @@ class MainActivity : ComponentActivity() {
 @Serializable
 object Craft
 
+@Serializable
+object ElementsList
+
 @Composable
 fun MyAppNavHost(
     modifier: Modifier = Modifier,
     navController: NavHostController = rememberNavController()
 ) {
+    val elementsStore = ElementsStore()
+    elementsStore.initStore()
+
     NavHost(
         modifier = modifier,
         navController = navController,
         startDestination = Craft
     ) {
         composable<Craft> {
-            CraftScreen()
+            val displayMetrics = LocalContext.current.resources.displayMetrics
+            CraftScreen(
+                viewModel = viewModel {
+                    CraftViewModel(
+                        store = elementsStore,
+                        screenWidth = displayMetrics.widthPixels.toFloat(),
+                        screenHeight = displayMetrics.heightPixels.toFloat(),
+                        onNavigateToElementsList = {
+                            navController.navigate(ElementsList)
+                        }
+                    )
+                }
+            )
+        }
+
+        composable<ElementsList> {
+            ElementsListScreen(
+                viewModel = viewModel {
+                    ElementsListViewModel(
+                        store = elementsStore
+                    )
+                }
+            )
         }
     }
 }
