@@ -1,5 +1,6 @@
 package ru.iandreyshev.cglab2_android.ui.list
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -13,9 +14,11 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.rounded.Face
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -26,13 +29,16 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.unit.dp
+import ru.iandreyshev.cglab2_android.domain.Element
+import ru.iandreyshev.cglab2_android.domain.IElementNameProvider
 import ru.iandreyshev.cglab2_android.presentation.list.ElementsListItem
 import ru.iandreyshev.cglab2_android.presentation.list.ElementsListViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ElementsListScreen(
-    viewModel: ElementsListViewModel
+    viewModel: ElementsListViewModel,
+    nameProvider: IElementNameProvider
 ) {
 
     val state by viewModel.state
@@ -47,8 +53,14 @@ fun ElementsListScreen(
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
                     titleContentColor = MaterialTheme.colorScheme.primary,
                 ),
-                title = {
-                    Text("Elements list")
+                title = { Text("Elements list") },
+                actions = {
+                    IconButton(onClick = viewModel::onChangeSort) {
+                        Icon(
+                            imageVector = Icons.Filled.Refresh,
+                            contentDescription = "Localized description"
+                        )
+                    }
                 }
             )
         }
@@ -57,17 +69,23 @@ fun ElementsListScreen(
             modifier = Modifier.padding(innerPadding),
         ) {
             items(state.all) {
-                ElementRow(it)
+                ElementRow(it, nameProvider, viewModel::onSelectElement)
             }
         }
     }
 }
 
 @Composable
-fun ElementRow(element: ElementsListItem) {
+fun ElementRow(
+    element: ElementsListItem,
+    nameProvider: IElementNameProvider,
+    onSelect: (Element) -> Unit
+) {
     Row(
-        modifier = Modifier.padding(vertical = 4.dp, horizontal = 16.dp)
-            .alpha(if (element.isEnabled) 1f else 0.32f),
+        modifier = Modifier
+            .padding(vertical = 4.dp, horizontal = 16.dp)
+            .alpha(if (element.isEnabled) 1f else 0.32f)
+            .clickable(element.isEnabled) { onSelect(element.element) },
     ) {
         Column {
             Icon(
@@ -80,7 +98,7 @@ fun ElementRow(element: ElementsListItem) {
         Column(
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text(element.element.name)
+            Text(nameProvider[element.element])
         }
     }
 }

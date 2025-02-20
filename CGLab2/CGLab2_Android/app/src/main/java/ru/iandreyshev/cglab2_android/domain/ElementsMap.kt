@@ -29,11 +29,10 @@ val ELEMENTS_MAP = mapOf(
 
 val DEFAULT_ELEMENTS = setOf(Element.FIRE, Element.AIR, Element.WATER, Element.GROUND)
 
-operator fun Element.plus(second: Element) =
-    this.ordinal and second.ordinal
+operator fun Element.plus(other: Element) = setOf(ordinal, other.ordinal)
 
-infix fun Int.creates(result: List<Element>) =
+infix fun Set<Int>.creates(result: List<Element>) =
     this to result
 
-infix fun Int.creates(result: Element) =
+infix fun Set<Int>.creates(result: Element) =
     this to listOf(result)

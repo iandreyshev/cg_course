@@ -49,6 +49,7 @@ dependencies {
     implementation("com.arkivanov.decompose:decompose:3.2.2")
 
     implementation("androidx.navigation:navigation-compose:2.8.6")
+    implementation(libs.androidx.runtime.livedata)
 
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)

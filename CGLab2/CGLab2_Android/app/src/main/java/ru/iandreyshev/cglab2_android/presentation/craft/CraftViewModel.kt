@@ -1,35 +1,53 @@
 package ru.iandreyshev.cglab2_android.presentation.craft
 
-import androidx.compose.runtime.State
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
-import androidx.lifecycle.ViewModel
+import ru.iandreyshev.cglab2_android.domain.Element
 import ru.iandreyshev.cglab2_android.domain.ElementsStore
+import ru.iandreyshev.cglab2_android.presentation.common.BIN_RADIUS_PX
+import ru.iandreyshev.cglab2_android.presentation.common.BaseViewModel
 import ru.iandreyshev.cglab2_android.presentation.common.COMBINE_AREA_H_PADDING
 import ru.iandreyshev.cglab2_android.presentation.common.COMBINE_AREA_SIZE
 import ru.iandreyshev.cglab2_android.presentation.common.COMBINE_AREA_W_PADDING
+import ru.iandreyshev.cglab2_android.presentation.common.ELEMENT_HEIGHT
 import ru.iandreyshev.cglab2_android.presentation.common.ELEMENT_SIZE
+import ru.iandreyshev.cglab2_android.presentation.common.ELEMENT_WIDTH
+import ru.iandreyshev.cglab2_android.presentation.common.RANDOM_POS_MARGIN
 import java.util.UUID
+import kotlin.math.sqrt
 
 class CraftViewModel(
     private val screenWidth: Float,
     private val screenHeight: Float,
     private val store: ElementsStore,
     private val onNavigateToElementsList: () -> Unit
-) : ViewModel() {
+) : BaseViewModel<CraftState, CraftEvent>(
+    initialState = CraftState()
+) {
 
-    val state: State<CraftState> by lazy { _state }
-
-    private val _state = mutableStateOf(CraftState())
     private var _dragOffset = Offset.Zero
 
     init {
         initState()
     }
 
+    fun initScreenMetrics(bottomInset: Int, binBottomMarginPx: Float) {
+        val binCenterY = screenHeight - BIN_RADIUS_PX - bottomInset - binBottomMarginPx
+        val binCenter = Offset(screenWidth / 2, binCenterY)
+
+        updateState {
+            copy(binCenter = binCenter)
+        }
+    }
+
+    fun onSpawnElement(element: Element) {
+        updateState {
+            copy(elements = stateValue.elements + newCraftElement(element))
+        }
+    }
+
     fun onDragStart(pos: Offset) {
-        val mutableElements = _state.value.elements.toMutableList()
+        val mutableElements = stateValue.elements.toMutableList()
         val elementToMove = mutableElements.reversed()
             .firstOrNull {
                 val elementRect = Rect(it.pos, ELEMENT_SIZE)
@@ -42,24 +60,47 @@ class CraftViewModel(
         mutableElements.remove(elementToMove)
         mutableElements.add(elementToMove)
 
-        _state.value = _state.value.copy(
-            elements = mutableElements,
-            dragElement = elementToMove
-        )
+        updateState {
+            copy(elements = mutableElements, dragElement = elementToMove)
+        }
     }
 
     fun onDrag(pos: Offset) {
-        val dragElement = _state.value.dragElement ?: return
+        val dragElement = stateValue.dragElement ?: return
         val newPos = pos + _dragOffset
-        val elements = _state.value.elements
+        val elements = stateValue.elements
             .map { if (it.id == dragElement.id) it.withPos(newPos) else it }
 
-        _state.value = _state.value.copy(elements = elements)
+        val dragCenter = Offset(newPos.x + ELEMENT_WIDTH / 2, newPos.y + ELEMENT_HEIGHT / 2)
+        val distance = stateValue.binCenter.distanceTo(dragCenter)
+        val isDragAboveTheBin = distance <= BIN_RADIUS_PX
+
+        if (isDragAboveTheBin && !stateValue.isDragAboveTheBin) {
+            emitEvent(VibrateTouchBin)
+        }
+
+        updateState {
+            copy(elements = elements, isDragAboveTheBin = isDragAboveTheBin)
+        }
     }
 
     fun onDragEng() {
         _dragOffset = Offset.Zero
-        _state.value = _state.value.copy(dragElement = null)
+
+        updateState {
+            val newElements = when {
+                isDragAboveTheBin ->
+                    elements.filter { it.id != dragElement?.id }
+
+                else -> elements
+            }
+
+            copy(
+                dragElement = null,
+                elements = newElements
+            )
+        }
+
         runCombining()
     }
 
@@ -68,9 +109,9 @@ class CraftViewModel(
     }
 
     private fun initState() {
-        _state.value = _state.value.copy(
-            elements = createStartElements(screenWidth, screenHeight)
-        )
+        updateState {
+            copy(elements = createStartElements(screenWidth, screenHeight))
+        }
     }
 
     private fun runCombining() {
@@ -84,9 +125,9 @@ class CraftViewModel(
 
     private fun getCombiningIntersections(): List<Intersecion> {
         val used = mutableSetOf<String>()
-        val lastIndex = _state.value.elements.lastIndex
+        val lastIndex = stateValue.elements.lastIndex
 
-        return _state.value.elements
+        return stateValue.elements
             .mapIndexedNotNull { index, craftElement ->
                 val startIndex = index + 1
 
@@ -94,7 +135,7 @@ class CraftViewModel(
                     return@mapIndexedNotNull null
                 }
 
-                val intersected = _state.value.elements
+                val intersected = stateValue.elements
                     .subList(startIndex, lastIndex + 1)
                     .firstOrNull {
                         !used.contains(it.id) &&
@@ -112,27 +153,51 @@ class CraftViewModel(
     }
 
     private fun spawnElements(intersections: List<Intersecion>) {
-        val newElements = _state.value.elements.toMutableList()
+        val newElements = stateValue.elements.toMutableList()
 
         intersections.forEach {
             newElements.remove(it.first)
             newElements.remove(it.second)
             newElements.add(
-                CraftElement(
-                    id = UUID.randomUUID().toString(),
-                    element = it.result,
-                    x = it.first.x,
-                    y = it.first.y
-                )
+                newCraftElement(element = it.result, position = it.first.pos)
             )
         }
 
-        _state.value = _state.value.copy(elements = newElements)
+        updateState {
+            copy(elements = newElements)
+        }
+    }
+
+    private fun newCraftElement(element: Element, position: Offset? = null): CraftElement {
+        val newPos = when (position) {
+            null -> {
+                val maxX = screenWidth.toInt() - RANDOM_POS_MARGIN - ELEMENT_WIDTH.toInt()
+                val maxY = screenHeight.toInt() - RANDOM_POS_MARGIN  - ELEMENT_HEIGHT.toInt()
+                Offset(
+                    x = (RANDOM_POS_MARGIN..maxX).random().toFloat(),
+                    y = (RANDOM_POS_MARGIN..maxY).random().toFloat()
+                )
+            }
+            else -> position
+        }
+
+        return CraftElement(
+            id = UUID.randomUUID().toString(),
+            element = element,
+            x = newPos.x,
+            y = newPos.y
+        )
     }
 }
 
-val CraftElement.combineAreaRect
+private val CraftElement.combineAreaRect
     get() = Rect(
         Offset(pos.x + COMBINE_AREA_W_PADDING, pos.y + COMBINE_AREA_H_PADDING),
         COMBINE_AREA_SIZE
     )
+
+private fun Offset.distanceTo(offset: Offset): Float {
+    val dx = offset.x - x
+    val dy = offset.y - y
+    return sqrt(dx * dx + dy * dy)
+}

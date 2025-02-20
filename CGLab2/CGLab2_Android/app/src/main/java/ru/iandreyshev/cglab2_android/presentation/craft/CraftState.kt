@@ -5,8 +5,13 @@ import ru.iandreyshev.cglab2_android.domain.Element
 
 data class CraftState(
     val elements: List<CraftElement> = emptyList(),
-    val dragElement: CraftElement? = null
-)
+    val dragElement: CraftElement? = null,
+    val binCenter: Offset = Offset.Zero,
+    val isDragAboveTheBin: Boolean = false,
+) {
+    val isDrag: Boolean
+        get() = dragElement != null
+}
 
 data class CraftElement(
     val id: String,
