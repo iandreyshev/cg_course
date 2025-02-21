@@ -1,7 +1,9 @@
 package ru.iandreyshev.cglab2_android
 
+import android.graphics.Color
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.Composable
@@ -13,21 +15,23 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import kotlinx.serialization.Serializable
-import ru.iandreyshev.cglab2_android.domain.Element
 import ru.iandreyshev.cglab2_android.domain.ElementsStore
-import ru.iandreyshev.cglab2_android.presentation.common.ElementDrawableResProvider
 import ru.iandreyshev.cglab2_android.presentation.common.ResourcesNameProvider
 import ru.iandreyshev.cglab2_android.presentation.common.SELECT_ELEMENT_NAV_KEY
 import ru.iandreyshev.cglab2_android.presentation.craft.CraftViewModel
 import ru.iandreyshev.cglab2_android.presentation.list.ElementsListViewModel
+import ru.iandreyshev.cglab2_android.presentation.viewImages.ViewImagesViewModel
 import ru.iandreyshev.cglab2_android.system.CGLab2_AndroidTheme
 import ru.iandreyshev.cglab2_android.ui.craft.CraftScreen
 import ru.iandreyshev.cglab2_android.ui.list.ElementsListScreen
+import ru.iandreyshev.cglab2_android.ui.viewImages.ViewImagesScreen
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
+        enableEdgeToEdge(
+            statusBarStyle = SystemBarStyle.light(Color.TRANSPARENT, Color.TRANSPARENT)
+        )
         setContent {
             CGLab2_AndroidTheme {
                 MyAppNavHost()
@@ -35,6 +39,9 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
+
+@Serializable
+object ViewImages
 
 @Serializable
 object Craft
@@ -50,14 +57,19 @@ fun MyAppNavHost(
     val elementsStore = ElementsStore()
     elementsStore.initStore()
 
+    val displayMetrics = LocalContext.current.resources.displayMetrics
+
     NavHost(
         modifier = modifier,
         navController = navController,
-        startDestination = Craft
+        startDestination = ViewImages
     ) {
+        composable<ViewImages> {
+            ViewImagesScreen(
+                viewModel = viewModel()
+            )
+        }
         composable<Craft> {
-            val displayMetrics = LocalContext.current.resources.displayMetrics
-
             CraftScreen(
                 viewModel = viewModel {
                     CraftViewModel(

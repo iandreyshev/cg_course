@@ -9,9 +9,8 @@ import ru.iandreyshev.cglab2_android.presentation.common.BaseViewModel
 import ru.iandreyshev.cglab2_android.presentation.common.COMBINE_AREA_H_PADDING
 import ru.iandreyshev.cglab2_android.presentation.common.COMBINE_AREA_SIZE
 import ru.iandreyshev.cglab2_android.presentation.common.COMBINE_AREA_W_PADDING
-import ru.iandreyshev.cglab2_android.presentation.common.ELEMENT_HEIGHT
+import ru.iandreyshev.cglab2_android.presentation.common.ELEMENT_SIDE
 import ru.iandreyshev.cglab2_android.presentation.common.ELEMENT_SIZE
-import ru.iandreyshev.cglab2_android.presentation.common.ELEMENT_WIDTH
 import ru.iandreyshev.cglab2_android.presentation.common.RANDOM_POS_MARGIN
 import java.util.UUID
 import kotlin.math.sqrt
@@ -31,8 +30,10 @@ class CraftViewModel(
         initState()
     }
 
-    fun initScreenMetrics(bottomInset: Int, binBottomMarginPx: Float) {
-        val binCenterY = screenHeight - BIN_RADIUS_PX - bottomInset - binBottomMarginPx
+    fun initScreenMetrics(insets: Int, binBottomMarginPx: Float) {
+        println("insets: $insets")
+        println("binBottomMarginPx: $binBottomMarginPx")
+        val binCenterY = screenHeight - BIN_RADIUS_PX - insets - binBottomMarginPx
         val binCenter = Offset(screenWidth / 2, binCenterY)
 
         updateState {
@@ -71,7 +72,7 @@ class CraftViewModel(
         val elements = stateValue.elements
             .map { if (it.id == dragElement.id) it.withPos(newPos) else it }
 
-        val dragCenter = Offset(newPos.x + ELEMENT_WIDTH / 2, newPos.y + ELEMENT_HEIGHT / 2)
+        val dragCenter = Offset(newPos.x + ELEMENT_SIDE / 2, newPos.y + ELEMENT_SIDE / 2)
         val distance = stateValue.binCenter.distanceTo(dragCenter)
         val isDragAboveTheBin = distance <= BIN_RADIUS_PX
 
@@ -171,8 +172,8 @@ class CraftViewModel(
     private fun newCraftElement(element: Element, position: Offset? = null): CraftElement {
         val newPos = when (position) {
             null -> {
-                val maxX = screenWidth.toInt() - RANDOM_POS_MARGIN - ELEMENT_WIDTH.toInt()
-                val maxY = screenHeight.toInt() - RANDOM_POS_MARGIN  - ELEMENT_HEIGHT.toInt()
+                val maxX = screenWidth.toInt() - RANDOM_POS_MARGIN - ELEMENT_SIDE.toInt()
+                val maxY = screenHeight.toInt() - RANDOM_POS_MARGIN  - ELEMENT_SIDE.toInt()
                 Offset(
                     x = (RANDOM_POS_MARGIN..maxX).random().toFloat(),
                     y = (RANDOM_POS_MARGIN..maxY).random().toFloat()

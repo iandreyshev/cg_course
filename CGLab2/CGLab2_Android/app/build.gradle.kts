@@ -44,11 +44,11 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
-    implementation("androidx.lifecycle:lifecycle-viewmodel-compose")
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
 
-    implementation("com.arkivanov.decompose:decompose:3.2.2")
+    implementation(libs.kotlinx.serialization.json)
 
-    implementation("androidx.navigation:navigation-compose:2.8.6")
+    implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.runtime.livedata)
 
     debugImplementation(libs.androidx.ui.tooling)

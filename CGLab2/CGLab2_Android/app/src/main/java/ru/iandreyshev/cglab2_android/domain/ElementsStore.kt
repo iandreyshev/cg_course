@@ -14,13 +14,7 @@ class ElementsStore {
     }
 
     fun tryCombine(first: Element, second: Element): List<Element> {
-        println("Try combine: $first + $second")
         val result = ELEMENTS_MAP[first + second].orEmpty()
-
-        println("Result is:")
-        result.forEach {
-            println(it)
-        }
 
         _elements.value = _elements.value.map { storeElement ->
             when {
@@ -32,4 +26,9 @@ class ElementsStore {
 
         return result
     }
+
+    fun getReceipt(element: Element): List<Set<Element>> =
+        ELEMENTS_MAP
+            .filter { it.value.contains(element) }
+            .keys.toList()
 }
