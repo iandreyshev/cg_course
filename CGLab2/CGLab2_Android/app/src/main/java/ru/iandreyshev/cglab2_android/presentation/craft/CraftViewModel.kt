@@ -1,7 +1,9 @@
 package ru.iandreyshev.cglab2_android.presentation.craft
 
+import android.content.res.Configuration
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.Size
 import ru.iandreyshev.cglab2_android.data.craft.Sound
 import ru.iandreyshev.cglab2_android.data.craft.SoundPlayer
 import ru.iandreyshev.cglab2_android.domain.craft.Element
@@ -18,24 +20,25 @@ import java.util.UUID
 import kotlin.math.sqrt
 
 class CraftViewModel(
-    private val screenWidth: Float,
-    private val screenHeight: Float,
+    screenSize: Size,
     private val store: ElementsStore,
-    private val soundPlayer: SoundPlayer,
-    private val onNavigateToElementsList: () -> Unit
+    private val soundPlayer: SoundPlayer
 ) : BaseViewModel<CraftState, CraftEvent>(
     initialState = CraftState()
 ) {
 
     private var _dragOffset = Offset.Zero
+    private var _screenSize = screenSize
+    private var _lastOrientation = Configuration.ORIENTATION_PORTRAIT
 
     init {
         initState()
     }
 
     fun initScreenMetrics(insets: Int, binBottomMarginPx: Float) {
-        val binCenterY = screenHeight - BIN_RADIUS_PX - insets - binBottomMarginPx
-        val binCenter = Offset(screenWidth / 2, binCenterY)
+        val binCenterY = _screenSize.height - BIN_RADIUS_PX - insets - binBottomMarginPx
+        val binCenter = Offset(_screenSize.width / 2, binCenterY)
+        println("UPDATE BIN CENTER: $binCenter")
 
         updateState {
             copy(binCenter = binCenter)
@@ -45,6 +48,22 @@ class CraftViewModel(
     fun onSpawnElement(element: Element) {
         updateState {
             copy(elements = stateValue.elements + newCraftElement(element))
+        }
+    }
+
+    fun onChangeOrientation(screenSize: Size, orientation: Int) {
+        if (_lastOrientation == orientation) {
+            return
+        }
+
+        println("UPDATE ORIENTATION")
+        _screenSize = screenSize
+        _lastOrientation = orientation
+        updateState {
+            copy(
+                elements = elements.map {  it.withPos(Offset(it.y, it.x)) },
+                binCenter = Offset(binCenter.y, binCenter.x)
+            )
         }
     }
 
@@ -110,13 +129,9 @@ class CraftViewModel(
         }
     }
 
-    fun onOpenElementsList() {
-        onNavigateToElementsList()
-    }
-
     private fun initState() {
         updateState {
-            copy(elements = createStartElements(screenWidth, screenHeight))
+            copy(elements = createStartElements(_screenSize))
         }
     }
 
@@ -181,8 +196,8 @@ class CraftViewModel(
     private fun newCraftElement(element: Element, position: Offset? = null): CraftElement {
         val newPos = when (position) {
             null -> {
-                val maxX = screenWidth.toInt() - RANDOM_POS_MARGIN - ELEMENT_SIDE.toInt()
-                val maxY = screenHeight.toInt() - RANDOM_POS_MARGIN  - ELEMENT_SIDE.toInt()
+                val maxX = _screenSize.width.toInt() - RANDOM_POS_MARGIN - ELEMENT_SIDE.toInt()
+                val maxY = _screenSize.height.toInt() - RANDOM_POS_MARGIN  - ELEMENT_SIDE.toInt()
                 Offset(
                     x = (RANDOM_POS_MARGIN..maxX).random().toFloat(),
                     y = (RANDOM_POS_MARGIN..maxY).random().toFloat()

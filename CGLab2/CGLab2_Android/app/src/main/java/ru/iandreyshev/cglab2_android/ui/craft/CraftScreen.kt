@@ -1,5 +1,6 @@
 package ru.iandreyshev.cglab2_android.ui.craft
 
+import android.content.res.Configuration
 import android.content.res.Resources
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Canvas
@@ -19,13 +20,15 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asAndroidBitmap
@@ -34,35 +37,30 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.imageResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.SavedStateHandle
+import kotlinx.coroutines.flow.onEach
 import ru.iandreyshev.cglab2_android.R
 import ru.iandreyshev.cglab2_android.domain.craft.Element
-import ru.iandreyshev.cglab2_android.domain.craft.Element.AIR
-import ru.iandreyshev.cglab2_android.domain.craft.Element.FIRE
-import ru.iandreyshev.cglab2_android.domain.craft.Element.GROUND
-import ru.iandreyshev.cglab2_android.domain.craft.Element.WATER
 import ru.iandreyshev.cglab2_android.presentation.common.BIN_BOTTOM_MARGIN_DP
 import ru.iandreyshev.cglab2_android.presentation.common.BIN_RADIUS_PX
 import ru.iandreyshev.cglab2_android.presentation.common.ELEMENT_SIDE
 import ru.iandreyshev.cglab2_android.presentation.common.ElementDrawableResProvider
 import ru.iandreyshev.cglab2_android.presentation.common.SELECT_ELEMENT_NAV_KEY
 import ru.iandreyshev.cglab2_android.presentation.common.aspectFit
-import ru.iandreyshev.cglab2_android.presentation.craft.CraftElement
 import ru.iandreyshev.cglab2_android.presentation.craft.CraftState
 import ru.iandreyshev.cglab2_android.presentation.craft.CraftViewModel
-import ru.iandreyshev.cglab2_android.presentation.craft.SuccessCraft
-import ru.iandreyshev.cglab2_android.presentation.craft.VibrateTouchBin
 import ru.iandreyshev.cglab2_android.system.ThemeBlue
 import ru.iandreyshev.cglab2_android.system.ThemeYellow
 
 @Composable
 fun CraftScreen(
     viewModel: CraftViewModel,
+    navigateToList: () -> Unit,
     savedStateHandle: SavedStateHandle,
     imageProvider: ElementDrawableResProvider = ElementDrawableResProvider()
 ) {
@@ -85,6 +83,18 @@ fun CraftScreen(
     val insets = systemBars.getBottom(LocalDensity.current) + systemBars.getTop(LocalDensity.current)
     val binBottomMargin = with(LocalDensity.current) { BIN_BOTTOM_MARGIN_DP.dp.toPx() }
     viewModel.initScreenMetrics(insets, binBottomMargin)
+
+    val displayMetrics = resources.displayMetrics
+    var orientation by remember { mutableStateOf(Configuration.ORIENTATION_PORTRAIT) }
+    val configuration = LocalConfiguration.current
+    LaunchedEffect(configuration) {
+        snapshotFlow { configuration.orientation }
+            .onEach {
+                val size = Size(displayMetrics.widthPixels.toFloat(), displayMetrics.heightPixels.toFloat())
+                viewModel.onChangeOrientation(size, it)
+            }
+            .collect { orientation = it }
+    }
 
     Canvas(
         modifier = Modifier
@@ -111,7 +121,7 @@ fun CraftScreen(
             .windowInsetsPadding(WindowInsets.systemBars)
     ) {
         ExtendedFloatingActionButton(
-            onClick = viewModel::onOpenElementsList,
+            onClick = navigateToList,
             modifier = Modifier
                 .align(alignment = Alignment.BottomEnd)
                 .offset(x = (-32).dp, y = (-32).dp)

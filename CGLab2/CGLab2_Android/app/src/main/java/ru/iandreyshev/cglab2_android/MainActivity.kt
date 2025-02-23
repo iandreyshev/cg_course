@@ -8,6 +8,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
@@ -84,14 +85,14 @@ fun MyAppNavHost(
                 viewModel = viewModel {
                     CraftViewModel(
                         store = elementsStore,
-                        screenWidth = displayMetrics.widthPixels.toFloat(),
-                        screenHeight = displayMetrics.heightPixels.toFloat(),
+                        screenSize = Size(
+                            displayMetrics.widthPixels.toFloat(),
+                            displayMetrics.heightPixels.toFloat()
+                        ),
                         soundPlayer = SoundPlayer(context),
-                        onNavigateToElementsList = {
-                            navController.navigate(ElementsList)
-                        }
                     )
                 },
+                navigateToList = { navController.navigate(ElementsList) },
                 savedStateHandle = it.savedStateHandle
             )
         }

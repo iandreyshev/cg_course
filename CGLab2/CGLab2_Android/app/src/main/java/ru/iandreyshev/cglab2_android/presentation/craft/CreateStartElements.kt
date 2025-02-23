@@ -1,12 +1,13 @@
 package ru.iandreyshev.cglab2_android.presentation.craft
 
+import androidx.compose.ui.geometry.Size
 import ru.iandreyshev.cglab2_android.domain.craft.Element
 import ru.iandreyshev.cglab2_android.presentation.common.ELEMENT_SIDE
 import java.util.UUID
 
-fun createStartElements(screenWidth: Float, screenHeight: Float): List<CraftElement> {
-    val firstWPoint = screenWidth / 3
-    val firstHPoint = screenHeight / 5
+fun createStartElements(screenSize: Size): List<CraftElement> {
+    val firstWPoint = screenSize.width / 3
+    val firstHPoint = screenSize.height / 5
 
     return listOf(
         CraftElement(

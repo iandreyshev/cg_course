@@ -71,7 +71,6 @@ fun ViewImagesScreen(
     var orientation by remember { mutableStateOf(Configuration.ORIENTATION_PORTRAIT) }
     val configuration = LocalConfiguration.current
     LaunchedEffect(configuration) {
-        // Save any changes to the orientation value on the configuration object
         snapshotFlow { configuration.orientation }
             .onEach { viewModel.onChangeOrientation() }
             .collect { orientation = it }
