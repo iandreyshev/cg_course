@@ -8,14 +8,7 @@ import ru.iandreyshev.cglab2_android.data.craft.Sound
 import ru.iandreyshev.cglab2_android.data.craft.SoundPlayer
 import ru.iandreyshev.cglab2_android.domain.craft.Element
 import ru.iandreyshev.cglab2_android.domain.craft.ElementsStore
-import ru.iandreyshev.cglab2_android.presentation.common.BIN_RADIUS_PX
 import ru.iandreyshev.cglab2_android.presentation.common.BaseViewModel
-import ru.iandreyshev.cglab2_android.presentation.common.COMBINE_AREA_H_PADDING
-import ru.iandreyshev.cglab2_android.presentation.common.COMBINE_AREA_SIZE
-import ru.iandreyshev.cglab2_android.presentation.common.COMBINE_AREA_W_PADDING
-import ru.iandreyshev.cglab2_android.presentation.common.ELEMENT_SIDE
-import ru.iandreyshev.cglab2_android.presentation.common.ELEMENT_SIZE
-import ru.iandreyshev.cglab2_android.presentation.common.RANDOM_POS_MARGIN
 import java.util.UUID
 import kotlin.math.sqrt
 
@@ -38,7 +31,6 @@ class CraftViewModel(
     fun initScreenMetrics(insets: Int, binBottomMarginPx: Float) {
         val binCenterY = _screenSize.height - BIN_RADIUS_PX - insets - binBottomMarginPx
         val binCenter = Offset(_screenSize.width / 2, binCenterY)
-        println("UPDATE BIN CENTER: $binCenter")
 
         updateState {
             copy(binCenter = binCenter)
@@ -56,7 +48,6 @@ class CraftViewModel(
             return
         }
 
-        println("UPDATE ORIENTATION")
         _screenSize = screenSize
         _lastOrientation = orientation
         updateState {

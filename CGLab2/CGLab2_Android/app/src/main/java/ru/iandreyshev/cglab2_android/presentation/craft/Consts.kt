@@ -1,4 +1,4 @@
-package ru.iandreyshev.cglab2_android.presentation.common
+package ru.iandreyshev.cglab2_android.presentation.craft
 
 import androidx.compose.ui.geometry.Size
 

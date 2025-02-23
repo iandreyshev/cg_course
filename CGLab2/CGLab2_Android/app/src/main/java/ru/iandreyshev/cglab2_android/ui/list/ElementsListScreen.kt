@@ -35,7 +35,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import ru.iandreyshev.cglab2_android.domain.craft.Element
 import ru.iandreyshev.cglab2_android.domain.craft.IElementNameProvider
-import ru.iandreyshev.cglab2_android.presentation.common.ElementDrawableResProvider
+import ru.iandreyshev.cglab2_android.presentation.craft.ElementDrawableResProvider
 import ru.iandreyshev.cglab2_android.presentation.list.ElementsListItem
 import ru.iandreyshev.cglab2_android.presentation.list.ElementsListViewModel
 import ru.iandreyshev.cglab2_android.system.ThemeBlue

@@ -18,8 +18,8 @@ import androidx.navigation.compose.rememberNavController
 import kotlinx.serialization.Serializable
 import ru.iandreyshev.cglab2_android.data.craft.SoundPlayer
 import ru.iandreyshev.cglab2_android.domain.craft.ElementsStore
-import ru.iandreyshev.cglab2_android.presentation.common.ResourcesNameProvider
-import ru.iandreyshev.cglab2_android.presentation.common.SELECT_ELEMENT_NAV_KEY
+import ru.iandreyshev.cglab2_android.presentation.craft.ResourcesNameProvider
+import ru.iandreyshev.cglab2_android.presentation.craft.SELECT_ELEMENT_NAV_KEY
 import ru.iandreyshev.cglab2_android.presentation.craft.CraftViewModel
 import ru.iandreyshev.cglab2_android.presentation.list.ElementsListViewModel
 import ru.iandreyshev.cglab2_android.system.CGLab2_AndroidTheme
@@ -69,7 +69,7 @@ fun MyAppNavHost(
     NavHost(
         modifier = modifier,
         navController = navController,
-        startDestination = Craft
+        startDestination = Stories
     ) {
         composable<Stories> {
             // Premultiplied alpha, Straight alpha

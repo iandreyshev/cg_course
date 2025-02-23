@@ -46,11 +46,11 @@ import androidx.lifecycle.SavedStateHandle
 import kotlinx.coroutines.flow.onEach
 import ru.iandreyshev.cglab2_android.R
 import ru.iandreyshev.cglab2_android.domain.craft.Element
-import ru.iandreyshev.cglab2_android.presentation.common.BIN_BOTTOM_MARGIN_DP
-import ru.iandreyshev.cglab2_android.presentation.common.BIN_RADIUS_PX
-import ru.iandreyshev.cglab2_android.presentation.common.ELEMENT_SIDE
-import ru.iandreyshev.cglab2_android.presentation.common.ElementDrawableResProvider
-import ru.iandreyshev.cglab2_android.presentation.common.SELECT_ELEMENT_NAV_KEY
+import ru.iandreyshev.cglab2_android.presentation.craft.BIN_BOTTOM_MARGIN_DP
+import ru.iandreyshev.cglab2_android.presentation.craft.BIN_RADIUS_PX
+import ru.iandreyshev.cglab2_android.presentation.craft.ELEMENT_SIDE
+import ru.iandreyshev.cglab2_android.presentation.craft.ElementDrawableResProvider
+import ru.iandreyshev.cglab2_android.presentation.craft.SELECT_ELEMENT_NAV_KEY
 import ru.iandreyshev.cglab2_android.presentation.common.aspectFit
 import ru.iandreyshev.cglab2_android.presentation.craft.CraftState
 import ru.iandreyshev.cglab2_android.presentation.craft.CraftViewModel
