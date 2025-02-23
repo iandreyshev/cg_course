@@ -1,5 +1,6 @@
 package ru.iandreyshev.cglab2_android.ui.viewImages
 
+import android.content.res.Configuration
 import android.graphics.ImageDecoder
 import android.net.Uri
 import android.text.TextPaint
@@ -21,10 +22,12 @@ import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Size
@@ -34,9 +37,11 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.flow.onEach
 import ru.iandreyshev.cglab2_android.presentation.common.aspectFit
 import ru.iandreyshev.cglab2_android.presentation.viewImages.ViewImagesViewModel
 import ru.iandreyshev.cglab2_android.system.ThemeYellow
@@ -50,20 +55,31 @@ fun ViewImagesScreen(
     val state by viewModel.state
 
     val contentResolver = LocalContext.current.contentResolver
-    var imageBitmap by remember { mutableStateOf<ImageBitmap?>(null) }
     val launcher = rememberLauncherForActivityResult(contract = ActivityResultContracts.GetContent()) { uri: Uri? ->
         uri ?: return@rememberLauncherForActivityResult
         val source = ImageDecoder.createSource(contentResolver, uri)
-        imageBitmap = ImageDecoder.decodeBitmap(source)
+
+        ImageDecoder.decodeBitmap(source)
             .aspectFit(MAX_IMAGE_SIZE)
             .asImageBitmap()
             .also {
-                viewModel.onSelectImage(Size(it.width.toFloat(), it.height.toFloat()))
+                val size = Size(it.width.toFloat(), it.height.toFloat())
+                viewModel.onSelectImage(it, size)
             }
     }
 
+    var orientation by remember { mutableStateOf(Configuration.ORIENTATION_PORTRAIT) }
+    val configuration = LocalConfiguration.current
+    LaunchedEffect(configuration) {
+        // Save any changes to the orientation value on the configuration object
+        snapshotFlow { configuration.orientation }
+            .onEach { viewModel.onChangeOrientation() }
+            .collect { orientation = it }
+    }
+
     Canvas(
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier
+            .fillMaxSize()
             .systemBarsPadding()
             .pointerInput(true) {
                 detectDragGestures(
@@ -77,7 +93,7 @@ fun ViewImagesScreen(
     ) {
         viewModel.initCanvasSize(size)
 
-        when (val bitmap = imageBitmap) {
+        when (val bitmap = state.imageBitmap) {
             null -> drawEmptyText()
             else -> drawImage(bitmap, state.position)
         }
@@ -103,11 +119,15 @@ fun ViewImagesScreen(
 
 }
 
+@Composable
+private fun handleImagePicker() {
+}
+
 private fun DrawScope.drawEmptyText() {
     val canvasWidth = size.width
     val canvasHeight = size.height
 
-    val text = "Для начала нужно выбрать картинку..."
+    val text = "Для начала нужно выбрать картинку"
     val paint = TextPaint().apply {
         color = android.graphics.Color.BLACK
         textSize = 16.sp.toPx()

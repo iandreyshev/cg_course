@@ -1,4 +1,4 @@
-package ru.iandreyshev.cglab2_android.domain
+package ru.iandreyshev.cglab2_android.domain.craft
 
 enum class Element {
     WATER,

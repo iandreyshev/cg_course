@@ -1,4 +1,4 @@
-package ru.iandreyshev.cglab2_android.domain
+package ru.iandreyshev.cglab2_android.domain.craft
 
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

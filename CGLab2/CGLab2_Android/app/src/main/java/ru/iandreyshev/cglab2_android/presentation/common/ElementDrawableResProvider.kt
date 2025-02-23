@@ -1,8 +1,8 @@
 package ru.iandreyshev.cglab2_android.presentation.common
 
 import ru.iandreyshev.cglab2_android.R
-import ru.iandreyshev.cglab2_android.domain.Element
-import ru.iandreyshev.cglab2_android.domain.Element.*
+import ru.iandreyshev.cglab2_android.domain.craft.Element
+import ru.iandreyshev.cglab2_android.domain.craft.Element.*
 
 class ElementDrawableResProvider {
 

@@ -1,7 +1,7 @@
 package ru.iandreyshev.cglab2_android.presentation.craft
 
 import androidx.compose.ui.geometry.Offset
-import ru.iandreyshev.cglab2_android.domain.Element
+import ru.iandreyshev.cglab2_android.domain.craft.Element
 
 data class CraftState(
     val elements: List<CraftElement> = emptyList(),

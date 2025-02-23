@@ -1,4 +1,4 @@
-package ru.iandreyshev.cglab2_android.domain
+package ru.iandreyshev.cglab2_android.domain.craft
 
 val ELEMENTS_MAP = mapOf(
     Element.FIRE + Element.WATER creates Element.STEAM,

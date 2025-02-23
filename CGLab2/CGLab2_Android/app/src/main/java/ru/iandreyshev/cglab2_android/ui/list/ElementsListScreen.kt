@@ -1,6 +1,5 @@
 package ru.iandreyshev.cglab2_android.ui.list
 
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -9,14 +8,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.systemBars
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -39,8 +33,8 @@ import androidx.compose.ui.res.imageResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import ru.iandreyshev.cglab2_android.domain.Element
-import ru.iandreyshev.cglab2_android.domain.IElementNameProvider
+import ru.iandreyshev.cglab2_android.domain.craft.Element
+import ru.iandreyshev.cglab2_android.domain.craft.IElementNameProvider
 import ru.iandreyshev.cglab2_android.presentation.common.ElementDrawableResProvider
 import ru.iandreyshev.cglab2_android.presentation.list.ElementsListItem
 import ru.iandreyshev.cglab2_android.presentation.list.ElementsListViewModel
@@ -58,8 +52,6 @@ fun ElementsListScreen(
     Scaffold(
         modifier = Modifier
             .fillMaxSize()
-//            .statusBarsPadding()
-//            .navigationBarsPadding()
             .background(ThemeBlue),
         topBar = {
             TopAppBar(
@@ -84,7 +76,7 @@ fun ElementsListScreen(
             modifier = Modifier.padding(innerPadding),
         ) {
             items(state.all) {
-                ElementRow(it, nameProvider, imageProvider, viewModel::onSelectElement)
+                ElementRow(it, nameProvider, imageProvider, state.isNavigationEnabled, viewModel::onSelectElement)
             }
         }
     }
@@ -95,12 +87,13 @@ fun ElementRow(
     element: ElementsListItem,
     nameProvider: IElementNameProvider,
     imageProvider: ElementDrawableResProvider,
+    isNavigationEnabled: Boolean,
     onSelect: (Element) -> Unit
 ) {
     Box(
         modifier = Modifier
             .alpha(if (element.isEnabled) 1f else 0.32f)
-            .clickable(element.isEnabled) { onSelect(element.element) },
+            .clickable(element.isEnabled && isNavigationEnabled) { onSelect(element.element) },
     ) {
         Row(
             modifier = Modifier

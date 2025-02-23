@@ -15,15 +15,16 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import kotlinx.serialization.Serializable
-import ru.iandreyshev.cglab2_android.domain.ElementsStore
+import ru.iandreyshev.cglab2_android.data.craft.SoundPlayer
+import ru.iandreyshev.cglab2_android.domain.craft.ElementsStore
 import ru.iandreyshev.cglab2_android.presentation.common.ResourcesNameProvider
 import ru.iandreyshev.cglab2_android.presentation.common.SELECT_ELEMENT_NAV_KEY
 import ru.iandreyshev.cglab2_android.presentation.craft.CraftViewModel
 import ru.iandreyshev.cglab2_android.presentation.list.ElementsListViewModel
-import ru.iandreyshev.cglab2_android.presentation.viewImages.ViewImagesViewModel
 import ru.iandreyshev.cglab2_android.system.CGLab2_AndroidTheme
 import ru.iandreyshev.cglab2_android.ui.craft.CraftScreen
 import ru.iandreyshev.cglab2_android.ui.list.ElementsListScreen
+import ru.iandreyshev.cglab2_android.ui.stories.StoriesScreen
 import ru.iandreyshev.cglab2_android.ui.viewImages.ViewImagesScreen
 
 class MainActivity : ComponentActivity() {
@@ -44,6 +45,9 @@ class MainActivity : ComponentActivity() {
 object ViewImages
 
 @Serializable
+object Stories
+
+@Serializable
 object Craft
 
 @Serializable
@@ -54,6 +58,8 @@ fun MyAppNavHost(
     modifier: Modifier = Modifier,
     navController: NavHostController = rememberNavController()
 ) {
+    val context = LocalContext.current
+
     val elementsStore = ElementsStore()
     elementsStore.initStore()
 
@@ -62,12 +68,16 @@ fun MyAppNavHost(
     NavHost(
         modifier = modifier,
         navController = navController,
-        startDestination = ViewImages
+        startDestination = Craft
     ) {
+        composable<Stories> {
+            // Premultiplied alpha, Straight alpha
+            // Рисовать в растр сразу
+            StoriesScreen(viewModel = viewModel())
+        }
         composable<ViewImages> {
-            ViewImagesScreen(
-                viewModel = viewModel()
-            )
+            // При повороте экрана чтобы всё работало
+            ViewImagesScreen(viewModel = viewModel())
         }
         composable<Craft> {
             CraftScreen(
@@ -76,6 +86,7 @@ fun MyAppNavHost(
                         store = elementsStore,
                         screenWidth = displayMetrics.widthPixels.toFloat(),
                         screenHeight = displayMetrics.heightPixels.toFloat(),
+                        soundPlayer = SoundPlayer(context),
                         onNavigateToElementsList = {
                             navController.navigate(ElementsList)
                         }

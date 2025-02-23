@@ -31,6 +31,7 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
@@ -40,11 +41,11 @@ import androidx.compose.ui.res.imageResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.SavedStateHandle
 import ru.iandreyshev.cglab2_android.R
-import ru.iandreyshev.cglab2_android.domain.Element
-import ru.iandreyshev.cglab2_android.domain.Element.AIR
-import ru.iandreyshev.cglab2_android.domain.Element.FIRE
-import ru.iandreyshev.cglab2_android.domain.Element.GROUND
-import ru.iandreyshev.cglab2_android.domain.Element.WATER
+import ru.iandreyshev.cglab2_android.domain.craft.Element
+import ru.iandreyshev.cglab2_android.domain.craft.Element.AIR
+import ru.iandreyshev.cglab2_android.domain.craft.Element.FIRE
+import ru.iandreyshev.cglab2_android.domain.craft.Element.GROUND
+import ru.iandreyshev.cglab2_android.domain.craft.Element.WATER
 import ru.iandreyshev.cglab2_android.presentation.common.BIN_BOTTOM_MARGIN_DP
 import ru.iandreyshev.cglab2_android.presentation.common.BIN_RADIUS_PX
 import ru.iandreyshev.cglab2_android.presentation.common.ELEMENT_SIDE
@@ -54,6 +55,7 @@ import ru.iandreyshev.cglab2_android.presentation.common.aspectFit
 import ru.iandreyshev.cglab2_android.presentation.craft.CraftElement
 import ru.iandreyshev.cglab2_android.presentation.craft.CraftState
 import ru.iandreyshev.cglab2_android.presentation.craft.CraftViewModel
+import ru.iandreyshev.cglab2_android.presentation.craft.SuccessCraft
 import ru.iandreyshev.cglab2_android.presentation.craft.VibrateTouchBin
 import ru.iandreyshev.cglab2_android.system.ThemeBlue
 import ru.iandreyshev.cglab2_android.system.ThemeYellow
@@ -65,7 +67,6 @@ fun CraftScreen(
     imageProvider: ElementDrawableResProvider = ElementDrawableResProvider()
 ) {
     val state by viewModel.state
-    val events = viewModel.events.collectAsState(initial = null)
 
     val resources = LocalContext.current.resources
     val bitmaps by remember { createBitmapsCache(resources, imageProvider) }
@@ -76,11 +77,9 @@ fun CraftScreen(
         savedStateHandle.remove<Element>(SELECT_ELEMENT_NAV_KEY)
     }
 
-    val haptic = LocalHapticFeedback.current
-
     val addButtonAlpha by animateFloatAsState(if (state.isDrag) 0f else 1f, label = "alpha")
-    val binAlpha by animateFloatAsState(if (state.isDrag) 1f else 0f, label = "alpha")
-    val binSizeFactor by animateFloatAsState(if (state.isDragAboveTheBin) 1.2f else 1f, label = "size")
+    val binAlpha by animateFloatAsState(if (state.isDrag) 0.54f else 0f, label = "alpha")
+    val binSizeFactor by animateFloatAsState(if (state.isDragAboveTheBin) 1.3f else 1f, label = "size")
 
     val systemBars = WindowInsets.systemBars
     val insets = systemBars.getBottom(LocalDensity.current) + systemBars.getTop(LocalDensity.current)
@@ -103,7 +102,7 @@ fun CraftScreen(
             }
     ) {
         drawElements(state, bitmaps)
-        drawBin(state.binCenter, binAlpha, binSizeFactor)
+        drawBin(resources, state.binCenter, binSizeFactor, binAlpha)
     }
 
     Box(
@@ -124,26 +123,6 @@ fun CraftScreen(
             text = { Text(text = "Список элементов") }
         )
     }
-
-    val event = events.value
-//    val v = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-//        val vibratorManager = LocalContext.current.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
-//        vibratorManager.defaultVibrator
-//    } else {
-//        LocalContext.current.getSystemService(VIBRATOR_SERVICE) as Vibrator
-//    }
-    LaunchedEffect(event) {
-        when (event) {
-            VibrateTouchBin -> {
-//                println("Handle vibrate")
-//                v.vibrate(VibrationEffect.EFFECT_CLICK)
-//                vibrator.defaultVibrator.vibrate(VibrationEffect.EFFECT_CLICK)
-//                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-            }
-
-            null -> Unit
-        }
-    }
 }
 
 private fun DrawScope.drawElements(state: CraftState, bitmaps: Map<Element, ImageBitmap>) {
@@ -152,24 +131,23 @@ private fun DrawScope.drawElements(state: CraftState, bitmaps: Map<Element, Imag
     }
 }
 
-private fun DrawScope.drawBin(center: Offset, alpha: Float, sizeFactor: Float) {
-    drawCircle(Color.Red, BIN_RADIUS_PX * sizeFactor, center, alpha = alpha)
-}
+private fun DrawScope.drawBin(resources: Resources, center: Offset, sizeFactor: Float, alpha: Float) {
+    val size = 2 * BIN_RADIUS_PX * sizeFactor
+    val binBitmap = ImageBitmap.imageResource(resources, R.drawable.ic_bin)
+        .asAndroidBitmap()
+        .aspectFit(size.toInt())
+        .asImageBitmap()
 
-private val CraftElement.color
-    get() = when (element) {
-        WATER -> Color.Blue
-        FIRE -> Color.Red
-        GROUND -> Color.Green
-        AIR -> Color.LightGray
-        else -> Color.Magenta
+    translate(center.x - BIN_RADIUS_PX * sizeFactor, center.y - BIN_RADIUS_PX * sizeFactor) {
+        drawImage(binBitmap, alpha = alpha)
     }
+}
 
 private fun createBitmapsCache(
     resources: Resources,
     imageProvider: ElementDrawableResProvider
-) = mutableStateOf(Element.entries.associate {
-    it to ImageBitmap.imageResource(resources, id = imageProvider[it])
+) = mutableStateOf(Element.entries.associateWith {
+    ImageBitmap.imageResource(resources, id = imageProvider[it])
         .asAndroidBitmap()
         .aspectFit(ELEMENT_SIDE.toInt())
         .asImageBitmap()

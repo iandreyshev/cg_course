@@ -2,8 +2,10 @@ package ru.iandreyshev.cglab2_android.presentation.craft
 
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
-import ru.iandreyshev.cglab2_android.domain.Element
-import ru.iandreyshev.cglab2_android.domain.ElementsStore
+import ru.iandreyshev.cglab2_android.data.craft.Sound
+import ru.iandreyshev.cglab2_android.data.craft.SoundPlayer
+import ru.iandreyshev.cglab2_android.domain.craft.Element
+import ru.iandreyshev.cglab2_android.domain.craft.ElementsStore
 import ru.iandreyshev.cglab2_android.presentation.common.BIN_RADIUS_PX
 import ru.iandreyshev.cglab2_android.presentation.common.BaseViewModel
 import ru.iandreyshev.cglab2_android.presentation.common.COMBINE_AREA_H_PADDING
@@ -19,6 +21,7 @@ class CraftViewModel(
     private val screenWidth: Float,
     private val screenHeight: Float,
     private val store: ElementsStore,
+    private val soundPlayer: SoundPlayer,
     private val onNavigateToElementsList: () -> Unit
 ) : BaseViewModel<CraftState, CraftEvent>(
     initialState = CraftState()
@@ -31,8 +34,6 @@ class CraftViewModel(
     }
 
     fun initScreenMetrics(insets: Int, binBottomMarginPx: Float) {
-        println("insets: $insets")
-        println("binBottomMarginPx: $binBottomMarginPx")
         val binCenterY = screenHeight - BIN_RADIUS_PX - insets - binBottomMarginPx
         val binCenter = Offset(screenWidth / 2, binCenterY)
 
@@ -90,8 +91,10 @@ class CraftViewModel(
 
         updateState {
             val newElements = when {
-                isDragAboveTheBin ->
+                isDragAboveTheBin -> {
+                    soundPlayer.play(Sound.BIN_TOSS)
                     elements.filter { it.id != dragElement?.id }
+                }
 
                 else -> elements
             }
@@ -102,7 +105,9 @@ class CraftViewModel(
             )
         }
 
-        runCombining()
+        if (runCombining()) {
+            soundPlayer.play(listOf(Sound.SUCCESS_CRAFT_1, Sound.SUCCESS_CRAFT_2).random())
+        }
     }
 
     fun onOpenElementsList() {
@@ -115,13 +120,17 @@ class CraftViewModel(
         }
     }
 
-    private fun runCombining() {
+    private fun runCombining(): Boolean {
+        var isSuccess = false
         var intersections = getCombiningIntersections()
 
         while (intersections.isNotEmpty()) {
+            isSuccess = true
             spawnElements(intersections)
             intersections = getCombiningIntersections()
         }
+
+        return isSuccess
     }
 
     private fun getCombiningIntersections(): List<Intersecion> {

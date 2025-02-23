@@ -2,11 +2,8 @@ package ru.iandreyshev.cglab2_android.presentation.viewImages
 
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.ImageBitmap
 import ru.iandreyshev.cglab2_android.presentation.common.BaseViewModel
-
-data class ViewImagesState(
-    val position: Offset = Offset.Zero
-)
 
 class ViewImagesViewModel : BaseViewModel<ViewImagesState, Any>(
     initialState = ViewImagesState()
@@ -20,9 +17,18 @@ class ViewImagesViewModel : BaseViewModel<ViewImagesState, Any>(
         _canvasSize = size
     }
 
-    fun onSelectImage(size: Size) {
-        println("Image size: $size")
+    fun onSelectImage(bitmap: ImageBitmap, size: Size) {
         _imageSize = size
+
+        updateState {
+            copy(imageBitmap = bitmap)
+        }
+    }
+
+    fun onChangeOrientation() {
+        updateState {
+            copy(position = Offset.Zero)
+        }
     }
 
     fun onDragStart(pos: Offset) {

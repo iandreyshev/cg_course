@@ -2,9 +2,9 @@ package ru.iandreyshev.cglab2_android.presentation.common
 
 import android.content.res.Resources
 import ru.iandreyshev.cglab2_android.R
-import ru.iandreyshev.cglab2_android.domain.Element
-import ru.iandreyshev.cglab2_android.domain.Element.*
-import ru.iandreyshev.cglab2_android.domain.IElementNameProvider
+import ru.iandreyshev.cglab2_android.domain.craft.Element
+import ru.iandreyshev.cglab2_android.domain.craft.Element.*
+import ru.iandreyshev.cglab2_android.domain.craft.IElementNameProvider
 
 class ResourcesNameProvider(
     private val resources: Resources

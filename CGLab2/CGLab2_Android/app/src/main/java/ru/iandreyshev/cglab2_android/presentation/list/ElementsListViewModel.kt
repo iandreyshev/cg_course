@@ -3,9 +3,9 @@ package ru.iandreyshev.cglab2_android.presentation.list
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
-import ru.iandreyshev.cglab2_android.domain.Element
-import ru.iandreyshev.cglab2_android.domain.ElementsStore
-import ru.iandreyshev.cglab2_android.domain.IElementNameProvider
+import ru.iandreyshev.cglab2_android.domain.craft.Element
+import ru.iandreyshev.cglab2_android.domain.craft.ElementsStore
+import ru.iandreyshev.cglab2_android.domain.craft.IElementNameProvider
 import ru.iandreyshev.cglab2_android.presentation.common.BaseViewModel
 import ru.iandreyshev.cglab2_android.presentation.list.SortType.*
 
@@ -22,6 +22,9 @@ class ElementsListViewModel(
     }
 
     fun onSelectElement(element: Element) {
+        updateState {
+            copy(isNavigationEnabled = false)
+        }
         onSelect(element)
     }
 
