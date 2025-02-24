@@ -7,16 +7,28 @@ import android.os.Environment
 import android.provider.MediaStore
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Canvas
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.drawscope.CanvasDrawScope
+import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import ru.iandreyshev.cglab2_android.presentation.common.BaseViewModel
 import ru.iandreyshev.cglab2_android.presentation.common.IDragListener
+import ru.iandreyshev.cglab2_android.ui.stories.drawPath
+import ru.iandreyshev.cglab2_android.ui.stories.drawToBitmap
 import java.io.IOException
 import java.util.Date
+import kotlin.coroutines.CoroutineContext
 import kotlin.math.abs
 
-class StoriesViewModel : BaseViewModel<StoriesState, Any>(
+class StoriesViewModel(
+    private val saveToFileContext: CoroutineContext = Dispatchers.IO
+) : BaseViewModel<StoriesState, Any>(
     initialState = StoriesState()
 ) {
 
@@ -25,28 +37,64 @@ class StoriesViewModel : BaseViewModel<StoriesState, Any>(
     val resultSize: Size
         get() = _resultSize
 
+    private var _canvas: Canvas? = null
+    private var _artBitmap: Bitmap? = null
+    private var _currentPath: PathData? = null
     private var _resultSize = Size.Zero
     private var _brushWidthControllerHeight = 0f
+    private var _drawScope = CanvasDrawScope()
 
     fun onSelectColor(color: Color) {
         updateState {
-            copy(brushColor = color)
+            copy(brushColor = color, isEraserMode = false)
+        }
+    }
+
+    fun onSelectEraser() {
+        updateState {
+            copy(brushColor = Color.Transparent, isEraserMode = true)
         }
     }
 
     fun onSelectPhoto(bitmap: Bitmap) {
         updateState {
-            copy(image = bitmap)
+            copy(photo = bitmap)
         }
     }
 
     fun onSaveCanvasSize(size: Size) {
+        if (_artBitmap == null) {
+            _artBitmap = Bitmap.createBitmap(
+                size.width.toInt(),
+                size.height.toInt(),
+                Bitmap.Config.ARGB_8888
+            )
+
+            updateState {
+                copy(art = _artBitmap)
+            }
+
+            _canvas = Canvas(_artBitmap?.asImageBitmap() ?: return)
+        }
         _resultSize = size
     }
 
-    fun onSaveToFile(resolver: ContentResolver, bitmap: Bitmap) {
+    fun onSaveToFile(resolver: ContentResolver) {
         viewModelScope.launch {
-            writeToFile(resolver, bitmap)
+            withContext(saveToFileContext) {
+                val bitmap = drawToBitmap(stateValue, _resultSize)
+                val contentValues = ContentValues().apply {
+                    put(MediaStore.MediaColumns.DISPLAY_NAME, "${Date()}.png")
+                    put(MediaStore.MediaColumns.MIME_TYPE, "image/png")
+                    put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_PICTURES)
+                }
+
+                val imageUri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues) ?: return@withContext
+
+                resolver.openOutputStream(imageUri).use {
+                    bitmap.compress(Bitmap.CompressFormat.PNG, 100, it ?: return@withContext)
+                }
+            }
         }
     }
 
@@ -54,56 +102,39 @@ class StoriesViewModel : BaseViewModel<StoriesState, Any>(
         _brushWidthControllerHeight = height
     }
 
-    @Throws(IOException::class)
-    private fun writeToFile(resolver: ContentResolver, bitmap: Bitmap) {
-        val contentValues = ContentValues().apply {
-            put(MediaStore.MediaColumns.DISPLAY_NAME, "${Date()}.png")
-            put(MediaStore.MediaColumns.MIME_TYPE, "image/png")
-            put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_PICTURES)
+    private fun drawArtToBitmap() {
+        _drawScope.draw(
+            density = Density(1f),
+            layoutDirection = LayoutDirection.Ltr,
+            canvas = _canvas ?: return,
+            size = _resultSize,
+        ) {
+            drawPath(_currentPath ?: return)
         }
-
-        val imageUri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues) ?: return
-
-        resolver.openOutputStream(imageUri).use {
-            bitmap.compress(Bitmap.CompressFormat.PNG, 100, it ?: return)
-        }
+        updateState { copy(recompositionToggle = !recompositionToggle) }
     }
 
     inner class DrawListener : IDragListener {
         override fun onDragStart(pos: Offset) {
-            updateState {
-                copy(
-                    currentPath = PathData(
-                        color = stateValue.brushColor,
-                        width = MIN_BRUSH_WIDTH + (MAX_BRUSH_WIDTH - MIN_BRUSH_WIDTH) * stateValue.brushWidthPercent,
-                        points = listOf(pos)
-                    )
-                )
-            }
+            _currentPath = PathData(
+                mode = if (stateValue.isEraserMode) PathMode.Eraser else PathMode.Color(stateValue.brushColor),
+                width = MIN_BRUSH_WIDTH + (MAX_BRUSH_WIDTH - MIN_BRUSH_WIDTH) * stateValue.brushWidthPercent,
+                points = listOf(pos)
+            )
+
+            drawArtToBitmap()
         }
 
         override fun onDrag(pos: Offset) {
-            val currentPath = (stateValue.currentPath ?: run {
-                return
-            })
+            _currentPath = _currentPath?.copy(
+                points = _currentPath?.points.orEmpty() + pos
+            )
 
-            updateState {
-                copy(
-                    currentPath = currentPath.copy(
-                        points = currentPath.points + pos
-                    )
-                )
-            }
+            drawArtToBitmap()
         }
 
         override fun onDragEnd() {
-            val lastPath = stateValue.currentPath ?: return
-            updateState {
-                copy(
-                    currentPath = null,
-                    paths = paths + lastPath
-                )
-            }
+            _currentPath = null
         }
     }
 

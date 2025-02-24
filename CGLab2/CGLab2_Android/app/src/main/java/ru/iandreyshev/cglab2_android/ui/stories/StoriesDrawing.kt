@@ -2,6 +2,8 @@ package ru.iandreyshev.cglab2_android.ui.stories
 
 import android.graphics.Bitmap
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
@@ -15,6 +17,7 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.LayoutDirection
 import ru.iandreyshev.cglab2_android.presentation.common.aspectFill
 import ru.iandreyshev.cglab2_android.presentation.stories.PathData
+import ru.iandreyshev.cglab2_android.presentation.stories.PathMode
 import ru.iandreyshev.cglab2_android.presentation.stories.StoriesState
 
 fun DrawScope.drawPhoto(image: Bitmap) {
@@ -28,19 +31,28 @@ fun DrawScope.drawArt(currentPath: PathData?, paths: List<PathData>) {
                 return@forEach
             }
 
-            val path = Path()
-            val firstPoint = pathData.points.first()
-
-            path.moveTo(firstPoint.x, firstPoint.y)
-
-            pathData.points.forEach {
-                path.lineTo(it.x, it.y)
-            }
-
-            val style = Stroke(width = pathData.width, cap = StrokeCap.Round, join = StrokeJoin.Round)
-
-            drawPath(path, pathData.color, style = style)
+            drawPath(pathData)
         }
+}
+
+fun DrawScope.drawPath(pathData: PathData) {
+    val path = Path()
+    val firstPoint = pathData.points.first()
+
+    path.moveTo(firstPoint.x, firstPoint.y)
+
+    pathData.points.forEach {
+        path.lineTo(it.x, it.y)
+    }
+
+    val style = Stroke(width = pathData.width, cap = StrokeCap.Round, join = StrokeJoin.Round)
+
+    when (val mode = pathData.mode) {
+        is PathMode.Color ->
+            drawPath(path, mode.color, style = style)
+        PathMode.Eraser ->
+            drawPath(path, Color.White, style = style, blendMode = BlendMode.Clear)
+    }
 }
 
 fun drawToBitmap(state: StoriesState, size: Size): Bitmap {
@@ -54,11 +66,12 @@ fun drawToBitmap(state: StoriesState, size: Size): Bitmap {
         canvas = canvas,
         size = size,
     ) {
-        val softwareBitmap: Bitmap = state.image
+        val softwareBitmap: Bitmap = state.photo
             ?.copy(Bitmap.Config.ARGB_8888, false)
             ?: throw IllegalStateException("Photo is null")
         drawPhoto(softwareBitmap)
-        drawArt(state.currentPath, state.paths)
+        drawPhoto(state.art ?: return@draw)
+//        drawArt(state.currentPath, state.paths)
     }
 
     return bitmap.asAndroidBitmap()

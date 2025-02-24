@@ -1,6 +1,5 @@
 package ru.iandreyshev.cglab2_android.ui.stories
 
-import android.graphics.Bitmap
 import android.graphics.ImageDecoder
 import android.net.Uri
 import android.text.TextPaint
@@ -24,7 +23,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -57,11 +55,11 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import ru.iandreyshev.cglab2_android.presentation.common.IDragListener
+import ru.iandreyshev.cglab2_android.presentation.common.InkEraser
 import ru.iandreyshev.cglab2_android.presentation.stories.BRUSH_WIDTH_CONTROLLER_ACTIVE_OFFSET_DP
 import ru.iandreyshev.cglab2_android.presentation.stories.BRUSH_WIDTH_CONTROLLER_HEIGHT_DP
 import ru.iandreyshev.cglab2_android.presentation.stories.MAX_BRUSH_WIDTH
 import ru.iandreyshev.cglab2_android.presentation.stories.MIN_BRUSH_WIDTH
-import ru.iandreyshev.cglab2_android.presentation.stories.PathData
 import ru.iandreyshev.cglab2_android.presentation.stories.STORIES_COLOR_PICKER_COLORS
 import ru.iandreyshev.cglab2_android.presentation.stories.StoriesState
 import ru.iandreyshev.cglab2_android.presentation.stories.StoriesViewModel
@@ -106,21 +104,18 @@ fun StoriesScreen(
                 ),
                 title = { Text("Story editor") },
                 actions = {
-                    state.image ?: return@TopAppBar
+                    state.photo ?: return@TopAppBar
                     IconButton(onClick = openPhotoPicker) {
                         Icon(imageVector = Icons.Outlined.Edit, contentDescription = null)
                     }
-                    IconButton(onClick = {
-                        val bitmap = drawToBitmap(state, viewModel.resultSize)
-                        viewModel.onSaveToFile(contentResolver, bitmap)
-                    }) {
+                    IconButton(onClick = { viewModel.onSaveToFile(contentResolver) }) {
                         Icon(imageVector = Icons.Outlined.CheckCircle, contentDescription = null)
                     }
                 }
             )
         },
         floatingActionButton = {
-            if (state.image != null) {
+            if (state.photo != null) {
                 return@Scaffold
             }
             ExtendedFloatingActionButton(
@@ -133,7 +128,7 @@ fun StoriesScreen(
             )
         }
     ) { innerPadding ->
-        when (state.image) {
+        when (state.photo) {
             null -> DrawEmptyText()
             else -> DrawEditor(
                 innerPadding = innerPadding,
@@ -142,7 +137,8 @@ fun StoriesScreen(
                 drawListener = viewModel.drawListener,
                 brushWidthControllerListener = viewModel.widthListener,
                 onSelectColor = viewModel::onSelectColor,
-                onSaveSize = viewModel::onSaveCanvasSize
+                onSelectEraser = viewModel::onSelectEraser,
+                onSaveSize = viewModel::onSaveCanvasSize,
             )
         }
     }
@@ -178,13 +174,14 @@ private fun DrawEditor(
     drawListener: IDragListener,
     brushWidthControllerListener: IDragListener,
     onSelectColor: (Color) -> Unit,
-    onSaveSize: (Size) -> Unit
+    onSelectEraser: () -> Unit,
+    onSaveSize: (Size) -> Unit,
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
         Column(modifier = Modifier.padding(innerPadding)) {
-            EditorArea(state.image, state.currentPath, state.paths, drawListener, onSaveSize)
+            EditorArea(state, drawListener, onSaveSize)
             Spacer(modifier = Modifier.height(12.dp))
-            ColorPicker(state.brushColor, onSelectColor)
+            ColorPicker(state.brushColor, state.isEraserMode, onSelectColor, onSelectEraser)
             Spacer(modifier = Modifier.height(16.dp))
         }
         BrushWidthController(
@@ -234,13 +231,11 @@ private fun BoxScope.BrushWidthController(
 
 @Composable
 private fun ColumnScope.EditorArea(
-    image: Bitmap?,
-    currentPath: PathData?,
-    paths: List<PathData>,
+    state: StoriesState,
     drawListener: IDragListener,
-    onSaveSize: (Size) -> Unit
+    onSaveCanvasSize: (Size) -> Unit
 ) {
-    image ?: return
+    val image = state.photo ?: return
     Box(
         modifier = Modifier
             .weight(1f)
@@ -251,8 +246,9 @@ private fun ColumnScope.EditorArea(
                 .fillMaxSize()
                 .clip(RoundedCornerShape(16.dp)),
             onDraw = {
+                println("DRAW PHOTO")
                 drawPhoto(image)
-                onSaveSize(size)
+                onSaveCanvasSize(size)
             }
         )
         Canvas(
@@ -268,7 +264,11 @@ private fun ColumnScope.EditorArea(
                         onDragEnd = drawListener::onDragEnd
                     )
                 },
-            onDraw = { drawArt(currentPath, paths) }
+            onDraw = {
+                println("DRAW ART")
+                drawPhoto(state.art ?: return@Canvas)
+//                drawArt(state.currentPath, state.paths)
+            }
         )
     }
 }
@@ -276,18 +276,19 @@ private fun ColumnScope.EditorArea(
 @Composable
 private fun ColumnScope.ColorPicker(
     brushColor: Color,
-    onSelectColor: (Color) -> Unit
+    isEraserMode: Boolean,
+    onSelectColor: (Color) -> Unit,
+    onSelectEraser: () -> Unit
 ) {
-
-    Box(
+    Row(
         modifier = Modifier
             .align(alignment = Alignment.CenterHorizontally)
             .clip(RoundedCornerShape(16.dp))
+            .background(Color.DarkGray)
+            .padding(16.dp)
     ) {
         Row(
             modifier = Modifier
-                .background(Color.DarkGray)
-                .padding(16.dp)
         ) {
             STORIES_COLOR_PICKER_COLORS.forEachIndexed { index, color ->
                 Box(
@@ -303,10 +304,23 @@ private fun ColumnScope.ColorPicker(
                 ) {
                     ColorTarget(color, brushColor)
                 }
-                if (index != STORIES_COLOR_PICKER_COLORS.lastIndex) {
-                    Spacer(modifier = Modifier.width(12.dp))
-                }
+                Spacer(modifier = Modifier.width(12.dp))
             }
+        }
+        Box(
+            modifier = Modifier
+                .size(32.dp)
+                .background(if (isEraserMode) Color.White else Color.Transparent, RoundedCornerShape(16.dp))
+                .clickable { onSelectEraser() }
+        ) {
+            Icon(
+                modifier = Modifier
+                    .size(if (isEraserMode) 28.dp else 24.dp)
+                    .align(Alignment.Center),
+                imageVector = InkEraser,
+                contentDescription = null,
+                tint = if (isEraserMode) Color.Black else Color.White
+            )
         }
     }
 }

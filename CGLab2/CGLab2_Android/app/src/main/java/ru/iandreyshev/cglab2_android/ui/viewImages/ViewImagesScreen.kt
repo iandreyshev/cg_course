@@ -24,7 +24,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
@@ -32,7 +32,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.nativeCanvas
@@ -68,7 +67,7 @@ fun ViewImagesScreen(
             }
     }
 
-    var orientation by remember { mutableStateOf(Configuration.ORIENTATION_PORTRAIT) }
+    var orientation by remember { mutableIntStateOf(Configuration.ORIENTATION_PORTRAIT) }
     val configuration = LocalConfiguration.current
     LaunchedEffect(configuration) {
         snapshotFlow { configuration.orientation }
@@ -116,10 +115,6 @@ fun ViewImagesScreen(
         )
     }
 
-}
-
-@Composable
-private fun handleImagePicker() {
 }
 
 private fun DrawScope.drawEmptyText() {
