@@ -1,0 +1,33 @@
+<resources>
+    <string name="app_name">CGLab2_Android</string>
+    <string name="element_water">Вода</string>
+    <string name="element_air">Воздух</string>
+    <string name="element_ground">Земля</string>
+    <string name="element_fire">Огонь</string>
+    <string name="element_steam">Пар</string>
+    <string name="element_lava">Лава</string>
+    <string name="element_dust">Пыль</string>
+    <string name="element_powder">Порох</string>
+    <string name="element_explosion">Взрыв</string>
+    <string name="element_smoke">Дым</string>
+    <string name="element_energy">Энергия</string>
+    <string name="element_stone">Камень</string>
+    <string name="element_storm">Буря</string>
+    <string name="element_metal">Металл</string>
+    <string name="element_electricity">Электричество</string>
+    <string name="element_hydrogen">Водород</string>
+    <string name="element_oxygen">Кислород</string>
+    <string name="element_ozone">Озон</string>
+    <string name="element_dirt">Грязь</string>
+    <string name="element_geyser">Гейзер</string>
+    <string name="element_steam_boiler">Паровой котёл</string>
+    <string name="element_pressure">Давление</string>
+    <string name="element_volcano">Вулкан</string>
+    <string name="element_explosive_gas">Гремучий газ</string>
+    <string name="element_swamp">Болото</string>
+    <string name="element_alcohol">Алкоголь</string>
+    <string name="element_molotov_cocktail">Коктейль Молотова</string>
+    <string name="element_life">Жизнь</string>
+    <string name="element_bacteria">Бактерии</string>
+    <string name="element_vodka">Водка</string>
+</resources>
