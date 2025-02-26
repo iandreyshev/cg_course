@@ -19,6 +19,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "CGLab2_Android"
+rootProject.name = "CGLab2"
 include(":app")
  

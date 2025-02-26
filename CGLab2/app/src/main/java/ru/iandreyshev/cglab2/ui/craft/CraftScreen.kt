@@ -44,18 +44,18 @@ import androidx.compose.ui.res.imageResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.SavedStateHandle
 import kotlinx.coroutines.flow.onEach
-import ru.iandreyshev.cglab2.R
 import ru.iandreyshev.cglab2.domain.craft.Element
+import ru.iandreyshev.cglab2.presentation.common.aspectFit
 import ru.iandreyshev.cglab2.presentation.craft.BIN_BOTTOM_MARGIN_DP
 import ru.iandreyshev.cglab2.presentation.craft.BIN_RADIUS_PX
+import ru.iandreyshev.cglab2.presentation.craft.CraftState
+import ru.iandreyshev.cglab2.presentation.craft.CraftViewModel
 import ru.iandreyshev.cglab2.presentation.craft.ELEMENT_SIDE
 import ru.iandreyshev.cglab2.presentation.craft.ElementDrawableResProvider
 import ru.iandreyshev.cglab2.presentation.craft.SELECT_ELEMENT_NAV_KEY
-import ru.iandreyshev.cglab2.presentation.common.aspectFit
-import ru.iandreyshev.cglab2.presentation.craft.CraftState
-import ru.iandreyshev.cglab2.presentation.craft.CraftViewModel
 import ru.iandreyshev.cglab2.system.ThemeBlue
 import ru.iandreyshev.cglab2.system.ThemeYellow
+import ru.iandreyshev.cglab2.R
 
 @Composable
 fun CraftScreen(

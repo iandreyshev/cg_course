@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">CGLab2_Android</string>
+    <string name="app_name">CGLab2</string>
     <string name="element_water">Вода</string>
     <string name="element_air">Воздух</string>
     <string name="element_ground">Земля</string>

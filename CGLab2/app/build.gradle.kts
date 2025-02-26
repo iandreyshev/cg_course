@@ -6,11 +6,11 @@ plugins {
 }
 
 android {
-    namespace = "ru.iandreyshev.cglab2_android"
+    namespace = "ru.iandreyshev.cglab2"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "ru.iandreyshev.cglab2_android"
+        applicationId = "ru.iandreyshev.cglab2"
         minSdk = 28
         targetSdk = 35
         versionCode = 1

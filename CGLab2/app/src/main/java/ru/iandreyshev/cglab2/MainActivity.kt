@@ -25,6 +25,7 @@ import ru.iandreyshev.cglab2.presentation.list.ElementsListViewModel
 import ru.iandreyshev.cglab2.system.CGLab2Theme
 import ru.iandreyshev.cglab2.ui.craft.CraftScreen
 import ru.iandreyshev.cglab2.ui.list.ElementsListScreen
+import ru.iandreyshev.cglab2.ui.menu.MenuScreen
 import ru.iandreyshev.cglab2.ui.stories.StoriesScreen
 import ru.iandreyshev.cglab2.ui.viewImages.ViewImagesScreen
 
@@ -41,6 +42,9 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
+
+@Serializable
+object Menu
 
 @Serializable
 object ViewImages
@@ -69,8 +73,15 @@ fun MyAppNavHost(
     NavHost(
         modifier = modifier,
         navController = navController,
-        startDestination = Stories
+        startDestination = Menu
     ) {
+        composable<Menu> {
+            MenuScreen(
+                onNavigateToViewImages = { navController.navigate(ViewImages) },
+                onNavigateToGame = { navController.navigate(Craft) },
+                onNavigateToStoryEditor = { navController.navigate(Stories) }
+            )
+        }
         composable<Stories> {
             // Premultiplied alpha, Straight alpha
             // Рисовать в растр сразу
