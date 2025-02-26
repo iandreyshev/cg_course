@@ -4,14 +4,16 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
-import ru.iandreyshev.cglab3.ui.theme.CGLab3Theme
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import kotlinx.serialization.Serializable
+import ru.iandreyshev.cglab3.system.CGLab3Theme
+import ru.iandreyshev.cglab3.ui.guide.GuideScreen
+import ru.iandreyshev.cglab3.ui.menu.MenuScreen
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -19,29 +21,35 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             CGLab3Theme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
-                    )
-                }
+                MyAppNavHost()
             }
         }
     }
 }
 
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
+@Serializable
+object Menu
 
-@Preview(showBackground = true)
+@Serializable
+object Guide
+
 @Composable
-fun GreetingPreview() {
-    CGLab3Theme {
-        Greeting("Android")
+fun MyAppNavHost(
+    modifier: Modifier = Modifier,
+    navController: NavHostController = rememberNavController()
+) {
+    NavHost(
+        modifier = modifier,
+        navController = navController,
+        startDestination = Menu
+    ) {
+        composable<Menu> {
+            MenuScreen(
+                onNavigateToGuide = { navController.navigate(Guide) }
+            )
+        }
+        composable<Guide> {
+            GuideScreen()
+        }
     }
 }
