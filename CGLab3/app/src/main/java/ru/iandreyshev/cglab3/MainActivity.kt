@@ -12,6 +12,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import kotlinx.serialization.Serializable
 import ru.iandreyshev.cglab3.system.CGLab3Theme
+import ru.iandreyshev.cglab3.ui.bezier.BezierScreen
 import ru.iandreyshev.cglab3.ui.guide.GuideScreen
 import ru.iandreyshev.cglab3.ui.menu.MenuScreen
 
@@ -33,6 +34,9 @@ object Menu
 @Serializable
 object Guide
 
+@Serializable
+object Bezier
+
 @Composable
 fun MyAppNavHost(
     modifier: Modifier = Modifier,
@@ -45,11 +49,15 @@ fun MyAppNavHost(
     ) {
         composable<Menu> {
             MenuScreen(
-                onNavigateToGuide = { navController.navigate(Guide) }
+                onNavigateToGuide = { navController.navigate(Guide) },
+                onNavigateToBezier = { navController.navigate(Bezier) }
             )
         }
         composable<Guide> {
             GuideScreen()
+        }
+        composable<Bezier> {
+            BezierScreen()
         }
     }
 }
