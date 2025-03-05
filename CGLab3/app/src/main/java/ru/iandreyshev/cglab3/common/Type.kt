@@ -1,4 +1,4 @@
-package ru.iandreyshev.cglab3.system
+package ru.iandreyshev.cglab3.common
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle

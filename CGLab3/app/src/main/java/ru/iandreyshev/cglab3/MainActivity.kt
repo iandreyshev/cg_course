@@ -6,15 +6,18 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import kotlinx.serialization.Serializable
-import ru.iandreyshev.cglab3.system.CGLab3Theme
-import ru.iandreyshev.cglab3.ui.bezier.BezierScreen
-import ru.iandreyshev.cglab3.ui.guide.GuideScreen
-import ru.iandreyshev.cglab3.ui.menu.MenuScreen
+import ru.iandreyshev.cglab3.bezier.domain.BezierModel
+import ru.iandreyshev.cglab3.bezier.presentation.BezierViewModel
+import ru.iandreyshev.cglab3.common.CGLab3Theme
+import ru.iandreyshev.cglab3.bezier.ui.BezierScreen
+import ru.iandreyshev.cglab3.guide.GuideScreen
+import ru.iandreyshev.cglab3.menu.MenuScreen
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -57,7 +60,12 @@ fun MyAppNavHost(
             GuideScreen()
         }
         composable<Bezier> {
-            BezierScreen()
+            BezierScreen(
+                isCanvas = false,
+                viewModel = viewModel {
+                    BezierViewModel(model = BezierModel())
+                }
+            )
         }
     }
 }

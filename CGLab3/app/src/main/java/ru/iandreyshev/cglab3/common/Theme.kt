@@ -1,4 +1,4 @@
-package ru.iandreyshev.cglab3.system
+package ru.iandreyshev.cglab3.common
 
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme

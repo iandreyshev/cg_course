@@ -1,4 +1,4 @@
-package ru.iandreyshev.cglab3.ui.menu
+package ru.iandreyshev.cglab3.menu
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
