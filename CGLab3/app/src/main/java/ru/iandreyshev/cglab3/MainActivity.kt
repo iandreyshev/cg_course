@@ -12,6 +12,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import kotlinx.serialization.Serializable
+import ru.iandreyshev.cglab3.asteroids.ui.AsteroidsScreen
 import ru.iandreyshev.cglab3.bezier.domain.BezierModel
 import ru.iandreyshev.cglab3.bezier.presentation.BezierViewModel
 import ru.iandreyshev.cglab3.common.CGLab3Theme
@@ -40,6 +41,9 @@ object Guide
 @Serializable
 object Bezier
 
+@Serializable
+object Asteroids
+
 @Composable
 fun MyAppNavHost(
     modifier: Modifier = Modifier,
@@ -48,7 +52,7 @@ fun MyAppNavHost(
     NavHost(
         modifier = modifier,
         navController = navController,
-        startDestination = Menu
+        startDestination = Asteroids
     ) {
         composable<Menu> {
             MenuScreen(
@@ -66,6 +70,9 @@ fun MyAppNavHost(
                     BezierViewModel(model = BezierModel())
                 }
             )
+        }
+        composable<Asteroids> {
+            AsteroidsScreen()
         }
     }
 }

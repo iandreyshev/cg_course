@@ -18,11 +18,11 @@ private const val CURVE_WIDTH = 10f
 
 class CurveOpenGLDrawable(resources: Resources) {
     private var _program: Int = GLES30.glCreateProgram().also {
-        val vertShader = resources.loadShader(GLES30.GL_VERTEX_SHADER, R.raw.vert_curve)
+        val vertShader = resources.loadShader(GLES30.GL_VERTEX_SHADER, R.raw.curve_vert)
         GLES30.glAttachShader(it, vertShader)
 
         // add the fragment shader to program
-        val fragShader = resources.loadShader(GLES30.GL_FRAGMENT_SHADER, R.raw.frag_curve)
+        val fragShader = resources.loadShader(GLES30.GL_FRAGMENT_SHADER, R.raw.curve_frag)
         GLES30.glAttachShader(it, fragShader)
 
         // creates OpenGL ES program executables
@@ -65,10 +65,8 @@ class CurveOpenGLDrawable(resources: Resources) {
 
         GLES30.glLineWidth(CURVE_WIDTH)
 
-        // Draw the triangle
         GLES30.glDrawArrays(GLES30.GL_LINE_STRIP, 0, state.curvePoints.size)
 
-        // Disable vertex array
         GLES30.glDisableVertexAttribArray(_positionHandle)
     }
 

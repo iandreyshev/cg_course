@@ -29,7 +29,13 @@ class GuideGLRenderer(
         GLES30.glClear(GLES30.GL_COLOR_BUFFER_BIT)
 
         // Set the camera position (View matrix)
-        Matrix.setLookAtM(viewMatrix, 0, 0f, 0f, 3f, 0f, 0f, 0f, 0f, 1.0f, 0.0f)
+        Matrix.setLookAtM(
+            viewMatrix,    // raw matrix
+            0,             // rm offset
+            0f, 0f, 3f,    // eye point
+            0f, 0f, 0f,    // view center
+            0f, 1.0f, 0.0f // up factor
+        )
 
         // Calculate the projection and view transformation
         Matrix.multiplyMM(vPMatrix, 0, projectionMatrix, 0, viewMatrix, 0)
@@ -41,10 +47,13 @@ class GuideGLRenderer(
     override fun onSurfaceChanged(unused: GL10, width: Int, height: Int) {
         GLES30.glViewport(0, 0, width, height)
 
-        val ratio: Float = width.toFloat() / height.toFloat()
-
         // this projection matrix is applied to object coordinates
         // in the onDrawFrame() method
-        Matrix.frustumM(projectionMatrix, 0, -ratio, ratio, -1f, 1f, 3f, 7f)
+        Matrix.orthoM(
+            projectionMatrix,                           // matrix
+            0,                                          // mOffset
+            0f, width.toFloat(), height.toFloat(), 0f,  // left, right, bottom, top
+            -1f, 7f                                     // near, far
+        )
     }
 }

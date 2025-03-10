@@ -3,7 +3,6 @@ package ru.iandreyshev.cglab3.bezier.ui.openGL
 import android.content.res.Resources
 import android.opengl.GLES30
 import androidx.compose.ui.geometry.Size
-import kotlinx.coroutines.flow.flowOf
 import ru.iandreyshev.cglab3.R
 import ru.iandreyshev.cglab3.bezier.presentation.BezierState
 import ru.iandreyshev.cglab3.common.loadShader
@@ -18,11 +17,11 @@ private const val MAX_COORDS_COUNT = VERTEX_COUNT * COORDS_PER_VERTEX
 
 class PointOpenGLDrawable(resources: Resources) {
     private var _program: Int = GLES30.glCreateProgram().also {
-        val vertShader = resources.loadShader(GLES30.GL_VERTEX_SHADER, R.raw.vert_curve_point)
+        val vertShader = resources.loadShader(GLES30.GL_VERTEX_SHADER, R.raw.curve_point_vert)
         GLES30.glAttachShader(it, vertShader)
 
         // add the fragment shader to program
-        val fragShader = resources.loadShader(GLES30.GL_FRAGMENT_SHADER, R.raw.frag_curve)
+        val fragShader = resources.loadShader(GLES30.GL_FRAGMENT_SHADER, R.raw.curve_frag)
         GLES30.glAttachShader(it, fragShader)
 
         // creates OpenGL ES program executables

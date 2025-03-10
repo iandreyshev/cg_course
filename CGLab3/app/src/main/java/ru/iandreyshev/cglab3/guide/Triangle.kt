@@ -10,9 +10,9 @@ import java.nio.FloatBuffer
 
 private const val COORDS_PER_VERTEX = 3
 private val triangleCoords = floatArrayOf(  // in counterclockwise order:
-    0f, 1f, 0f,               // top
-    -1f, 0f, 0f,             // bottom left
-    0.5f, 0f, 0f       // bottom right
+    0f, 0f, 0f,               // top
+    0f, 100f, 0f,             // bottom left
+    100f, 100f, 0f            // bottom right
 )
 
 class Triangle(
@@ -21,11 +21,11 @@ class Triangle(
     // create empty OpenGL ES Program
     private var mProgram: Int = GLES30.glCreateProgram().also {
         // add the vertex shader to program
-        val vertShader = res.loadShader(GLES30.GL_VERTEX_SHADER, R.raw.vert_triangle)
+        val vertShader = res.loadShader(GLES30.GL_VERTEX_SHADER, R.raw.triangle_vert)
         GLES30.glAttachShader(it, vertShader)
 
         // add the fragment shader to program
-        val fragShader = res.loadShader(GLES30.GL_FRAGMENT_SHADER, R.raw.frag_triangle)
+        val fragShader = res.loadShader(GLES30.GL_FRAGMENT_SHADER, R.raw.triangle_frag)
         GLES30.glAttachShader(it, fragShader)
 
         // creates OpenGL ES program executables
