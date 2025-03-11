@@ -5,7 +5,8 @@ import android.opengl.GLES30
 import android.opengl.GLSurfaceView
 import android.opengl.Matrix
 import ru.iandreyshev.cglab3.asteroids.presentation.AsteroidsState
-import ru.iandreyshev.cglab3.asteroids.ui.openGL.objects.ShipCGDrawable
+import ru.iandreyshev.cglab3.asteroids.ui.openGL.objects.EnemyGLDrawable
+import ru.iandreyshev.cglab3.asteroids.ui.openGL.objects.ShipGLDrawable
 import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.opengles.GL10
 
@@ -18,7 +19,8 @@ class AsteroidsGLRenderer(
 
     private lateinit var _state: AsteroidsState
 
-    private lateinit var _ship: ShipCGDrawable
+    private lateinit var _ship: ShipGLDrawable
+    private lateinit var _enemy: EnemyGLDrawable
 
     init {
         // Set the camera position (View matrix)
@@ -39,7 +41,8 @@ class AsteroidsGLRenderer(
         // Set the background frame color
         GLES30.glClearColor(0.0f, 0.0f, 0.0f, 1.0f)
 
-        _ship = ShipCGDrawable(res)
+        _ship = ShipGLDrawable(res)
+        _enemy = EnemyGLDrawable(res)
     }
 
     override fun onDrawFrame(unused: GL10) {
@@ -48,6 +51,10 @@ class AsteroidsGLRenderer(
 
         // Draw shape
         _ship.draw(_state.ship, _viewMatrix, _projectionMatrix)
+
+        _state.enemies.forEach {
+            _enemy.draw(it, _viewMatrix, _projectionMatrix)
+        }
     }
 
     override fun onSurfaceChanged(unused: GL10, width: Int, height: Int) {

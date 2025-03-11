@@ -7,6 +7,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
@@ -29,7 +30,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
@@ -40,6 +41,9 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.viewmodel.compose.viewModel
 import ru.iandreyshev.cglab3.asteroids.presentation.AsteroidsState
 import ru.iandreyshev.cglab3.asteroids.presentation.AsteroidsViewModel
+import ru.iandreyshev.cglab3.asteroids.presentation.GamePhase.GAME_OVER
+import ru.iandreyshev.cglab3.asteroids.presentation.GamePhase.PLAYING
+import ru.iandreyshev.cglab3.asteroids.presentation.GamePhase.START
 import ru.iandreyshev.cglab3.asteroids.ui.openGL.AsteroidsGLSurfaceView
 
 private const val STICK_FIELD_DRAW_RADIUS_DP = 72
@@ -55,7 +59,7 @@ fun AsteroidsScreen(
 
     Column(
         modifier = Modifier
-            .background(AsteroidsColors.black)
+            .background(AstColors.black)
             .fillMaxSize()
             .windowInsetsPadding(WindowInsets.systemBars)
             .padding(horizontal = 16.dp, vertical = 24.dp)
@@ -67,7 +71,7 @@ fun AsteroidsScreen(
             onDragStart = viewModel::onDragStart,
             onDrag = viewModel::onDrag,
             onDragEnd = viewModel::onDragEnd,
-            onFire = viewModel::onFire
+            onFire = viewModel::onFireClick
         )
     }
 }
@@ -83,7 +87,7 @@ private fun ColumnScope.GameScene(
             .fillMaxSize()
             .weight(1f)
             .clip(shape)
-            .border(BorderStroke(2.dp, AsteroidsColors.darkWhite), shape)
+            .border(BorderStroke(2.dp, AstColors.darkWhite), shape)
     ) {
         AndroidView(
             modifier = Modifier
@@ -96,6 +100,58 @@ private fun ColumnScope.GameScene(
                 view.update(state)
             }
         )
+        GameUI(state)
+    }
+}
+
+@Composable
+private fun BoxScope.GameUI(state: AsteroidsState) {
+    when (state.gamePhase) {
+        START -> {
+            Column(
+                modifier = Modifier.fillMaxSize(),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    "ASTEROIDS",
+                    color = AstColors.white,
+                    fontSize = 24.sp
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    "Press \"FIRE\" to start",
+                    color = AstColors.white
+                )
+            }
+        }
+
+        PLAYING -> {
+            Text(
+                modifier = Modifier.padding(vertical = 8.dp, horizontal = 12.dp),
+                text = "Score: ${state.score}",
+                color = AstColors.white
+            )
+        }
+
+        GAME_OVER -> {
+            Text(
+                "GAME OVER",
+                color = AstColors.white,
+                fontSize = 24.sp
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                "You score: ${state.score}",
+                color = AstColors.white,
+                fontSize = 18.sp
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                "Press \"FIRE\" to start",
+                color = AstColors.white
+            )
+        }
     }
 }
 
@@ -134,18 +190,18 @@ private fun ColumnScope.GameController(
                     )
                 }
         ) {
-            drawCircle(AsteroidsColors.yellow, stickFieldDrawRadiusPx)
+            drawCircle(AstColors.yellow, stickFieldDrawRadiusPx)
 
             val stickDrawCenter = stickCenter ?: stickFieldCenter
-            drawCircle(AsteroidsColors.black, STICK_RADIUS_DP.dp.toPx(), stickDrawCenter)
-            drawCircle(AsteroidsColors.white, STICK_RADIUS_DP.dp.toPx() - STICK_STROKE_DP.dp.toPx(), stickDrawCenter)
+            drawCircle(AstColors.black, STICK_RADIUS_DP.dp.toPx(), stickDrawCenter)
+            drawCircle(AstColors.white, STICK_RADIUS_DP.dp.toPx() - STICK_STROKE_DP.dp.toPx(), stickDrawCenter)
         }
         Button(
             onClick = onFire,
             modifier = Modifier
                 .size((2 * STICK_FIELD_DRAW_RADIUS_DP).dp),
             colors = ButtonDefaults.buttonColors()
-                .copy(containerColor = AsteroidsColors.red, contentColor = AsteroidsColors.white)
+                .copy(containerColor = AstColors.red, contentColor = AstColors.white)
         ) {
             Text("FIRE", fontSize = 20.sp)
         }

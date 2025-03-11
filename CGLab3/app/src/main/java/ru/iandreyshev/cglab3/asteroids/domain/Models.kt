@@ -9,24 +9,16 @@ data class ShipState(
     val velocity: Float = 0f
 )
 
-data class Enemy(
+data class EnemyState(
     val pos: Offset,
-    val radius: Float,
+    val radius: Int,
     val rotation: Float,
-    val velocity: Float
+    val speed: Float,
+    val direction: Offset
 )
 
-data class Bullet(
+data class BulletState(
     val pos: Offset,
     val rotation: Float,
     val size: Size
-)
-
-data class Explosion(
-    val pos: Offset,
-    val particles: List<Particle>
-)
-
-data class Particle(
-    val pos: Offset,
 )

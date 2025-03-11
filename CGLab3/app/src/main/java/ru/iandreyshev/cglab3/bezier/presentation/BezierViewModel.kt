@@ -75,7 +75,6 @@ class BezierViewModel(
 
     fun onChangeDetalization(newDetalization: Float) {
         updateState {
-            println("detalization = $detalization")
             val newPoints = when (val detalization = newDetalization.toInt()) {
                 BezierState.MAX_DETALIZATION -> model.getPoints(p0, p1, p2, p3)
                 else -> model.getPoints(p0, p1, p2, p3, detalization)

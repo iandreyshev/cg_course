@@ -22,3 +22,8 @@ fun Offset.rotate(degrees: Double): Offset {
 
     return Offset(newX.toFloat(), newY.toFloat())
 }
+
+fun Offset.normalize(): Offset {
+    val length = sqrt(x * x + y * y)
+    return Offset(x / length, y / length)
+}

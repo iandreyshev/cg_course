@@ -3,7 +3,7 @@ package ru.iandreyshev.cglab3.asteroids.presentation
 import androidx.compose.ui.geometry.Offset
 import ru.iandreyshev.cglab3.common.distanceTo
 import ru.iandreyshev.cglab3.common.findRotationAngle
-import kotlin.math.sqrt
+import ru.iandreyshev.cglab3.common.normalize
 
 data class StickInfo(
     val center: Offset,
@@ -18,29 +18,26 @@ data class StickInfo(
             radius: Float,
             position: Offset
         ): StickInfo {
-            val stickPosition = position - center
             // Нормализуем направляющий вектор
-            val length = sqrt(stickPosition.x * stickPosition.x + stickPosition.y * stickPosition.y)
-            val unitDx = stickPosition.x / length
-            val unitDy = stickPosition.y / length
+            val normalized = (position - center).normalize()
 
             // Точка пересечения на окружности
-            val intersectionX = center.x + unitDx * radius
-            val intersectionY = center.y + unitDy * radius
+            val intersectionX = center.x + normalized.x * radius
+            val intersectionY = center.y + normalized.y * radius
 
             val stickCenter = when {
                 center.distanceTo(position) >= radius -> Offset(intersectionX, intersectionY)
                 else -> position
             }
 
-            val normalized = Offset(unitDx, -unitDy)
+            val normalizedReverted = normalized.copy(y = -normalized.y)
             val percent = center.distanceTo(stickCenter) / radius
 
             return StickInfo(
                 center = stickCenter,
-                angle = findRotationAngle(normalized) - 90,
-                percent = center.distanceTo(stickCenter) / radius,
-                normalized = normalized
+                angle = findRotationAngle(normalizedReverted) - 90,
+                percent = percent,
+                normalized = normalizedReverted
             )
         }
     }

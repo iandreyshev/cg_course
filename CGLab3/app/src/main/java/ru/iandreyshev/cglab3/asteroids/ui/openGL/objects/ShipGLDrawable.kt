@@ -3,8 +3,10 @@ package ru.iandreyshev.cglab3.asteroids.ui.openGL.objects
 import android.content.res.Resources
 import android.opengl.GLES30
 import android.opengl.Matrix
+import androidx.compose.ui.text.resolveDefaults
 import ru.iandreyshev.cglab3.R
 import ru.iandreyshev.cglab3.asteroids.domain.ShipState
+import ru.iandreyshev.cglab3.common.createProgramGLES30
 import ru.iandreyshev.cglab3.common.loadShader
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
@@ -17,22 +19,8 @@ private val SHIP_COORDS = floatArrayOf(
     +25f, -30f, 0f
 )
 
-class ShipCGDrawable(
-    res: Resources
-) {
-    // create empty OpenGL ES Program
-    private var mProgram: Int = GLES30.glCreateProgram().also {
-        // add the vertex shader to program
-        val vertShader = res.loadShader(GLES30.GL_VERTEX_SHADER, R.raw.ship_vert)
-        GLES30.glAttachShader(it, vertShader)
-
-        // add the fragment shader to program
-        val fragShader = res.loadShader(GLES30.GL_FRAGMENT_SHADER, R.raw.ship_frag)
-        GLES30.glAttachShader(it, fragShader)
-
-        // creates OpenGL ES program executables
-        GLES30.glLinkProgram(it)
-    }
+class ShipGLDrawable(res: Resources) {
+    private var _program = createProgramGLES30(res, R.raw.ship_vert, R.raw.ship_frag)
 
     private val _modelMatrix = FloatArray(16)
     private val _viewModelMatrix = FloatArray(16)
@@ -49,16 +37,10 @@ class ShipCGDrawable(
     val color = floatArrayOf(0.63671875f, 0.76953125f, 0.22265625f, 1.0f)
 
     private var vertexBuffer: FloatBuffer =
-        // (number of coordinate values * 4 bytes per float)
-        ByteBuffer.allocateDirect(SHIP_COORDS.size * 4).run {
-            // use the device hardware's native byte order
+        ByteBuffer.allocateDirect(SHIP_COORDS.size * Float.SIZE_BYTES).run {
             order(ByteOrder.nativeOrder())
-
-            // create a floating point buffer from the ByteBuffer
             asFloatBuffer().apply {
-                // add the coordinates to the FloatBuffer
                 put(SHIP_COORDS)
-                // set the buffer to read the first coordinate
                 position(0)
             }
         }
@@ -75,9 +57,9 @@ class ShipCGDrawable(
         Matrix.multiplyMM(_viewModelMatrix, 0, viewMatrix, 0, _modelMatrix, 0)
         Matrix.multiplyMM(_mvpMatrix, 0, projectionMatrix, 0, _viewModelMatrix, 0)
 
-        GLES30.glUseProgram(mProgram)
+        GLES30.glUseProgram(_program)
 
-        _positionHandle = GLES30.glGetAttribLocation(mProgram, "vPosition")
+        _positionHandle = GLES30.glGetAttribLocation(_program, "vPosition")
 
         GLES30.glEnableVertexAttribArray(_positionHandle)
         GLES30.glVertexAttribPointer(
@@ -89,10 +71,10 @@ class ShipCGDrawable(
             vertexBuffer         // буффер координат
         )
 
-        _colorHandle = GLES30.glGetUniformLocation(mProgram, "vColor")
+        _colorHandle = GLES30.glGetUniformLocation(_program, "vColor")
         GLES30.glUniform4fv(_colorHandle, 1, color, 0)
 
-        _mvpMatrixHandle = GLES30.glGetUniformLocation(mProgram, "uMVPMatrix")
+        _mvpMatrixHandle = GLES30.glGetUniformLocation(_program, "uMVPMatrix")
         GLES30.glUniformMatrix4fv(_mvpMatrixHandle, 1, false, _mvpMatrix, 0)
         GLES30.glDrawArrays(GLES30.GL_TRIANGLES, 0, _vertexCount)
 

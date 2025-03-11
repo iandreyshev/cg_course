@@ -5,16 +5,22 @@ import androidx.compose.ui.unit.IntSize
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import ru.iandreyshev.cglab3.asteroids.domain.AsteroidsConst
+import ru.iandreyshev.cglab3.asteroids.domain.AstConst
+import ru.iandreyshev.cglab3.asteroids.domain.EnemyState
 import ru.iandreyshev.cglab3.asteroids.presentation.GamePhase.GAME_OVER
 import ru.iandreyshev.cglab3.asteroids.presentation.GamePhase.PLAYING
 import ru.iandreyshev.cglab3.asteroids.presentation.GamePhase.START
 import ru.iandreyshev.cglab3.common.BaseViewModel
+import ru.iandreyshev.cglab3.common.normalize
+import ru.iandreyshev.cglab3.common.randomPointOnCircle
 import kotlin.math.abs
+import kotlin.math.atan2
+import kotlin.math.cos
 import kotlin.math.sign
+import kotlin.math.sin
+import kotlin.random.Random.Default.nextDouble
 
 private const val MILLIS_IN_SEC = 1000L
-private const val FRAME_RATE = 60L
 
 class AsteroidsViewModel : BaseViewModel<AsteroidsState, Any>(
     initialState = AsteroidsState()
@@ -26,15 +32,13 @@ class AsteroidsViewModel : BaseViewModel<AsteroidsState, Any>(
     private var _stickInfo: StickInfo? = null
     private var _isFireHandled = true
 
+    private var _nextSpawnTime = 0L
+
     init {
         runGameLoop()
     }
 
-    fun onStart() {
-    }
-
     fun onUpdateWorldSize(size: IntSize) {
-        println("update world size: $size")
         _worldSize = size
     }
 
@@ -59,8 +63,16 @@ class AsteroidsViewModel : BaseViewModel<AsteroidsState, Any>(
         }
     }
 
-    fun onFire() {
-        _isFireHandled = false
+    fun onFireClick() {
+        when (stateValue.gamePhase) {
+            START,
+            GAME_OVER -> {
+                updateState { copy(gamePhase = PLAYING) }
+            }
+            PLAYING -> {
+                _isFireHandled = false
+            }
+        }
     }
 
     fun onRestart() {
@@ -76,7 +88,7 @@ class AsteroidsViewModel : BaseViewModel<AsteroidsState, Any>(
                 doFrameTick(elapsedTime)
                 lastFrameTime = newFrameTime
 
-                delay(MILLIS_IN_SEC / FRAME_RATE)
+                delay(MILLIS_IN_SEC / AstConst.FRAME_RATE)
             }
         }
     }
@@ -91,7 +103,9 @@ class AsteroidsViewModel : BaseViewModel<AsteroidsState, Any>(
             PLAYING -> handleCollisions()
                 .handleShipMove(elapsedTime)
                 .handleShipFire()
-                .handleAsteroidsMove()
+                .handleEnemiesMove(elapsedTime)
+                .handleBulletsMove(elapsedTime)
+                .handleEnemiesSpawn()
 
             GAME_OVER -> {
                 // TODO: Implement game over phase
@@ -107,7 +121,7 @@ class AsteroidsViewModel : BaseViewModel<AsteroidsState, Any>(
     private fun AsteroidsState.handleShipMove(elapsedTime: Float): AsteroidsState {
         val worldSize = _worldSize ?: return this
         val stickInfo = _stickInfo ?: return this
-        var newPosition = ship.pos + stickInfo.normalized * stickInfo.percent * AsteroidsConst.SHIP_SPEED * elapsedTime
+        var newPosition = ship.pos + stickInfo.normalized * stickInfo.percent * AstConst.SHIP_SPEED * elapsedTime
 
         val maxX = worldSize.width / 2
         if (abs(newPosition.x) > maxX) {
@@ -127,11 +141,43 @@ class AsteroidsViewModel : BaseViewModel<AsteroidsState, Any>(
         )
     }
 
-    private fun AsteroidsState.handleAsteroidsMove(): AsteroidsState {
-        return this
+    private fun AsteroidsState.handleEnemiesMove(elapsedTime: Float): AsteroidsState {
+        val worldSize = _worldSize ?: return this
+
+        return copy(enemies = enemies.mapNotNull { enemyState ->
+            if (abs(enemyState.pos.x) + AstConst.Enemy.MAX_RADIUS > worldSize.width ||
+                abs(enemyState.pos.y) + AstConst.Enemy.MAX_RADIUS > worldSize.height
+            ) return@mapNotNull null
+
+            val move = enemyState.direction * enemyState.speed * elapsedTime
+            enemyState.copy(pos = enemyState.pos + move)
+        })
     }
 
-    private fun AsteroidsState.handleBulletsMove(): AsteroidsState {
+    private fun AsteroidsState.handleEnemiesSpawn(): AsteroidsState {
+        val currentTime = System.currentTimeMillis()
+        if (_nextSpawnTime > currentTime) {
+            return this
+        }
+
+        val worldSize = _worldSize ?: return this
+        _nextSpawnTime = currentTime +
+                (AstConst.Enemy.MIN_SPAWN_PAUSE_MS..AstConst.Enemy.MAX_SPAWN_PAUSE_MS).random()
+
+        val spawnPosition = randomPointOnCircle(worldSize.height / 2f)
+        val direction = enemyRandomDirection(Offset.Zero - spawnPosition)
+        val newEnemy = EnemyState(
+            pos = spawnPosition,
+            radius = (AstConst.Enemy.MIN_RADIUS..AstConst.Enemy.MAX_RADIUS).random(),
+            rotation = (0..360).random().toFloat(),
+            speed = (AstConst.Enemy.MIN_SPEED..AstConst.Enemy.MAX_SPEED).random().toFloat(),
+            direction = direction
+        )
+
+        return copy(enemies = enemies + newEnemy)
+    }
+
+    private fun AsteroidsState.handleBulletsMove(elapsedTime: Float): AsteroidsState {
         return this
     }
 
@@ -144,6 +190,26 @@ class AsteroidsViewModel : BaseViewModel<AsteroidsState, Any>(
         _isFireHandled = true
 
         return this
+    }
+
+    private fun enemyRandomDirection(direction: Offset): Offset {
+        val normalizedDirection = direction.normalize()
+        val alpha = atan2(normalizedDirection.y, normalizedDirection.x)
+
+        // Выбираем случайный угол отклонения в диапазоне [-leftDeg, rightDeg]
+        val coneDegree = AstConst.Enemy.DIRECTION_CONE_DEGREE
+        val randomOffsetRad = nextDouble(-coneDegree, coneDegree)
+            .let(Math::toRadians)
+
+        // Итоговый угол = угол direction + случайное отклонение
+        val finalAngle = alpha + randomOffsetRad
+
+        // Строим новый вектор на основе итогового угла
+        val x = cos(finalAngle).toFloat()
+        val y = sin(finalAngle).toFloat()
+
+        // Так как cos^2 + sin^2 = 1, вектор (x, y) уже нормализован
+        return Offset(x, y)
     }
 
 }

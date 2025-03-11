@@ -1,8 +1,12 @@
 package ru.iandreyshev.cglab3.common
 
 import androidx.compose.ui.geometry.Offset
+import kotlin.math.PI
 import kotlin.math.atan2
+import kotlin.math.cos
+import kotlin.math.sin
 import kotlin.math.sqrt
+import kotlin.random.Random
 
 // center, radius - параметры окружности
 // x, y - направляющий вектор линии
@@ -25,3 +29,14 @@ fun findIntersectionWithCircle(
 
 fun findRotationAngle(point: Offset): Float =
     (atan2(point.y.toDouble(), point.x.toDouble()) * 180f / Math.PI).toFloat()
+
+fun randomPointOnCircle(radius: Float): Offset {
+    // Случайный угол от 0 до 2π
+    val angle = Random.nextDouble(0.0, 2.0 * PI)
+
+    // Координаты точки на окружности
+    val x = radius * cos(angle).toFloat()
+    val y = radius * sin(angle).toFloat()
+
+    return Offset(x, y)
+}
