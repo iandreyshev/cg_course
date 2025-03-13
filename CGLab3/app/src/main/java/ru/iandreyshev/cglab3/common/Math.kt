@@ -4,6 +4,7 @@ import androidx.compose.ui.geometry.Offset
 import kotlin.math.PI
 import kotlin.math.atan2
 import kotlin.math.cos
+import kotlin.math.pow
 import kotlin.math.sin
 import kotlin.math.sqrt
 import kotlin.random.Random
@@ -39,4 +40,15 @@ fun randomPointOnCircle(radius: Float): Offset {
     val y = radius * sin(angle).toFloat()
 
     return Offset(x, y)
+}
+
+fun circlesIntersect(center1: Offset, r1: Float, center2: Offset, r2: Float) =
+    center1.distanceTo(center2) <= r1 + r2
+
+fun degreesToNormalizedVector(angleDegrees: Float): Offset {
+    val angleRadians = Math.toRadians(angleDegrees.toDouble()) // Перевод градусов в радианы
+    val x = cos(angleRadians).toFloat()
+    val y = sin(angleRadians).toFloat()
+    println("Direction: ${Offset(x, y)}")
+    return Offset(x, y) // Возвращаем нормализованный вектор (единичной длины)
 }

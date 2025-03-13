@@ -6,11 +6,15 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import ru.iandreyshev.cglab3.asteroids.domain.AstConst
+import ru.iandreyshev.cglab3.asteroids.domain.BulletState
 import ru.iandreyshev.cglab3.asteroids.domain.EnemyState
+import ru.iandreyshev.cglab3.asteroids.domain.ShipState
 import ru.iandreyshev.cglab3.asteroids.presentation.GamePhase.GAME_OVER
 import ru.iandreyshev.cglab3.asteroids.presentation.GamePhase.PLAYING
 import ru.iandreyshev.cglab3.asteroids.presentation.GamePhase.START
 import ru.iandreyshev.cglab3.common.BaseViewModel
+import ru.iandreyshev.cglab3.common.circlesIntersect
+import ru.iandreyshev.cglab3.common.degreesToNormalizedVector
 import ru.iandreyshev.cglab3.common.normalize
 import ru.iandreyshev.cglab3.common.randomPointOnCircle
 import kotlin.math.abs
@@ -32,7 +36,8 @@ class AsteroidsViewModel : BaseViewModel<AsteroidsState, Any>(
     private var _stickInfo: StickInfo? = null
     private var _isFireHandled = true
 
-    private var _nextSpawnTime = 0L
+    private var _nextEnemySpawnTime = 0L
+    private var _nextStarSpawnTime = 0L
 
     init {
         runGameLoop()
@@ -64,11 +69,21 @@ class AsteroidsViewModel : BaseViewModel<AsteroidsState, Any>(
     }
 
     fun onFireClick() {
-        when (stateValue.gamePhase) {
+        when (stateValue.phase) {
             START,
             GAME_OVER -> {
-                updateState { copy(gamePhase = PLAYING) }
+                updateState {
+                    copy(
+                        phase = PLAYING,
+                        score = 0,
+                        ship = ShipState(),
+                        enemies = emptyList(),
+                        bullets = emptyList(),
+                        stars = emptyList(),
+                    )
+                }
             }
+
             PLAYING -> {
                 _isFireHandled = false
             }
@@ -76,6 +91,7 @@ class AsteroidsViewModel : BaseViewModel<AsteroidsState, Any>(
     }
 
     fun onRestart() {
+        onFireClick()
     }
 
     private fun runGameLoop() {
@@ -94,31 +110,84 @@ class AsteroidsViewModel : BaseViewModel<AsteroidsState, Any>(
     }
 
     private fun doFrameTick(elapsedTime: Float) = updateState {
-        when (stateValue.gamePhase) {
-            START -> {
-                // TODO: Implement start phase
-                this
-            }
+        when (stateValue.phase) {
+            START,
+            GAME_OVER -> //handleEnemiesMove(elapsedTime)
+                handleStarsMove(elapsedTime)
+                .handleStarsSpawn()
 
             PLAYING -> handleCollisions()
                 .handleShipMove(elapsedTime)
-                .handleShipFire()
                 .handleEnemiesMove(elapsedTime)
                 .handleBulletsMove(elapsedTime)
                 .handleEnemiesSpawn()
-
-            GAME_OVER -> {
-                // TODO: Implement game over phase
-                this
-            }
+                .handleBulletsSpawn()
         }
     }
 
     private fun AsteroidsState.handleCollisions(): AsteroidsState {
-        return this
+        ship ?: return this
+
+        var points = 0
+        val newEnemies = mutableListOf<EnemyState>()
+        val aliveEnemies = mutableListOf<EnemyState>()
+        var aliveBullets = bullets
+
+        enemies.forEach { enemy ->
+            val enemyRadius = AstConst.Enemy.RADIUS * AstConst.Enemy.SCALE_LVL_0
+
+            if (circlesIntersect(enemy.position, enemyRadius, ship.pos, 30f)) {
+                return copy(
+                    phase = GAME_OVER,
+                    ship = null,
+                    enemies = emptyList(),
+                    bullets = emptyList()
+                )
+            }
+
+            var isEnemyAlive = true
+            aliveBullets = aliveBullets.mapNotNull { bullet ->
+                when {
+                    circlesIntersect(enemy.position, enemyRadius, bullet.position, AstConst.Bullet.RADIUS) -> {
+                        if (enemy.level == EnemyState.Level.BOSS) {
+                            newEnemies += EnemyState.random(
+                                position = enemy.position,
+                                level = EnemyState.Level.REGULAR,
+                                direction = enemyRandomDirection(enemy.direction)
+                            )
+                            newEnemies += EnemyState.random(
+                                position = enemy.position,
+                                level = EnemyState.Level.REGULAR,
+                                direction = enemyRandomDirection(enemy.direction)
+                            )
+                            points += AstConst.POINTS_PER_BOSS_ENEMY
+                        } else {
+                            points += AstConst.POINTS_PER_REGULAR_ENEMY
+                        }
+
+                        isEnemyAlive = false
+                        return@mapNotNull null
+                    }
+
+                    else -> return@mapNotNull bullet
+                }
+            }
+
+            if (isEnemyAlive) {
+                aliveEnemies += enemy
+            }
+        }
+
+        return copy(
+            score = score + points,
+            enemies = aliveEnemies + newEnemies,
+            bullets = aliveBullets
+        )
     }
 
     private fun AsteroidsState.handleShipMove(elapsedTime: Float): AsteroidsState {
+        ship ?: return this
+
         val worldSize = _worldSize ?: return this
         val stickInfo = _stickInfo ?: return this
         var newPosition = ship.pos + stickInfo.normalized * stickInfo.percent * AstConst.SHIP_SPEED * elapsedTime
@@ -145,51 +214,102 @@ class AsteroidsViewModel : BaseViewModel<AsteroidsState, Any>(
         val worldSize = _worldSize ?: return this
 
         return copy(enemies = enemies.mapNotNull { enemyState ->
-            if (abs(enemyState.pos.x) + AstConst.Enemy.MAX_RADIUS > worldSize.width ||
-                abs(enemyState.pos.y) + AstConst.Enemy.MAX_RADIUS > worldSize.height
+            if (abs(enemyState.position.x) > worldSize.width ||
+                abs(enemyState.position.y) > worldSize.height
             ) return@mapNotNull null
 
             val move = enemyState.direction * enemyState.speed * elapsedTime
-            enemyState.copy(pos = enemyState.pos + move)
+            enemyState.copy(position = enemyState.position + move)
         })
     }
 
     private fun AsteroidsState.handleEnemiesSpawn(): AsteroidsState {
+        val worldSize = _worldSize ?: return this
+
         val currentTime = System.currentTimeMillis()
-        if (_nextSpawnTime > currentTime) {
+        if (_nextEnemySpawnTime > currentTime) {
             return this
         }
 
-        val worldSize = _worldSize ?: return this
-        _nextSpawnTime = currentTime +
-                (AstConst.Enemy.MIN_SPAWN_PAUSE_MS..AstConst.Enemy.MAX_SPAWN_PAUSE_MS).random()
+        _nextEnemySpawnTime = currentTime + when (phase) {
+            PLAYING -> (AstConst.Enemy.MIN_SPAWN_PAUSE_MS..AstConst.Enemy.MAX_SPAWN_PAUSE_MS).random()
+            else -> AstConst.Enemy.PAUSE_SPAWN_PAUSE_MS
+        }
 
         val spawnPosition = randomPointOnCircle(worldSize.height / 2f)
-        val direction = enemyRandomDirection(Offset.Zero - spawnPosition)
-        val newEnemy = EnemyState(
-            pos = spawnPosition,
-            radius = (AstConst.Enemy.MIN_RADIUS..AstConst.Enemy.MAX_RADIUS).random(),
-            rotation = (0..360).random().toFloat(),
-            speed = (AstConst.Enemy.MIN_SPEED..AstConst.Enemy.MAX_SPEED).random().toFloat(),
-            direction = direction
+        val newEnemy = EnemyState.random(
+            position = spawnPosition,
+            direction = enemyRandomDirection(Offset.Zero - spawnPosition)
         )
 
         return copy(enemies = enemies + newEnemy)
     }
 
-    private fun AsteroidsState.handleBulletsMove(elapsedTime: Float): AsteroidsState {
-        return this
+    private fun AsteroidsState.handleStarsSpawn(): AsteroidsState {
+        val worldSize = _worldSize ?: return this
+
+        val currentTime = System.currentTimeMillis()
+        if (_nextStarSpawnTime > currentTime) {
+            return this
+        }
+
+        _nextStarSpawnTime = currentTime + 100
+
+        val newStars = mutableListOf<BulletState>()
+
+        repeat(10) {
+            newStars += BulletState(
+                position = Offset.Zero,
+                direction = randomPointOnCircle(worldSize.height * 2 / 2f).normalize(),
+                speed = 800f
+            )
+        }
+
+        return copy(stars = stars + newStars)
     }
 
-    private fun AsteroidsState.handleShipFire(): AsteroidsState {
+    private fun AsteroidsState.handleStarsMove(elapsedTime: Float): AsteroidsState {
+        val worldSize = _worldSize ?: return this
+
+        return copy(stars = stars.mapNotNull { starState ->
+            if (abs(starState.position.x) > worldSize.width ||
+                abs(starState.position.y) > worldSize.height
+            ) return@mapNotNull null
+
+            val move = starState.direction * starState.speed * elapsedTime
+            starState.copy(position = starState.position + move)
+        })
+    }
+
+    private fun AsteroidsState.handleBulletsMove(elapsedTime: Float): AsteroidsState {
+        val worldSize = _worldSize ?: return this
+
+        return copy(bullets = bullets.mapNotNull { bulletState ->
+            if (abs(bulletState.position.x) > worldSize.width ||
+                abs(bulletState.position.y) > worldSize.height
+            ) return@mapNotNull null
+
+            val move = bulletState.direction * bulletState.speed * elapsedTime
+            bulletState.copy(position = bulletState.position + move)
+        })
+    }
+
+    private fun AsteroidsState.handleBulletsSpawn(): AsteroidsState {
+        ship ?: return this
+
         if (_isFireHandled) {
             return this
         }
 
-        // TODO: Create bullet
         _isFireHandled = true
 
-        return this
+        return copy(
+            bullets = bullets + BulletState(
+                position = ship.pos,
+                direction = degreesToNormalizedVector(ship.rotation + 90),
+                speed = AstConst.Bullet.SPEED
+            )
+        )
     }
 
     private fun enemyRandomDirection(direction: Offset): Offset {

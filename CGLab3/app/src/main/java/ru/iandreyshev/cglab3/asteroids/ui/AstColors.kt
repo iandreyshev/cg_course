@@ -8,4 +8,6 @@ object AstColors {
     val red = Color(0xFFF36445)
     val white = Color(0xFFFEFCF9)
     val darkWhite = Color(0xFFF4EAE8)
+
+    val enemy = Color(0xFFFA8211)
 }

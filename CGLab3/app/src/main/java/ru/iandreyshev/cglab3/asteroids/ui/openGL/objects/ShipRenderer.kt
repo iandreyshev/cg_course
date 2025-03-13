@@ -3,23 +3,21 @@ package ru.iandreyshev.cglab3.asteroids.ui.openGL.objects
 import android.content.res.Resources
 import android.opengl.GLES30
 import android.opengl.Matrix
-import androidx.compose.ui.text.resolveDefaults
 import ru.iandreyshev.cglab3.R
 import ru.iandreyshev.cglab3.asteroids.domain.ShipState
 import ru.iandreyshev.cglab3.common.createProgramGLES30
-import ru.iandreyshev.cglab3.common.loadShader
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.nio.FloatBuffer
 
 private const val COORDS_PER_VERTEX = 3
 private val SHIP_COORDS = floatArrayOf(
-    +00f, +50f, 0f,
-    -25f, -30f, 0f,
-    +25f, -30f, 0f
+    +00f, +40f, 0f,
+    -25f, -40f, 0f,
+    +25f, -40f, 0f
 )
 
-class ShipGLDrawable(res: Resources) {
+class ShipRenderer(res: Resources) {
     private var _program = createProgramGLES30(res, R.raw.ship_vert, R.raw.ship_frag)
 
     private val _modelMatrix = FloatArray(16)
