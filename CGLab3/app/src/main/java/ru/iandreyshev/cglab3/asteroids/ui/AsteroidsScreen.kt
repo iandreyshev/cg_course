@@ -51,7 +51,7 @@ private const val STICK_STROKE_DP = 3.5
 
 @Composable
 fun AsteroidsScreen(
-    viewModel: AsteroidsViewModel = viewModel()
+    viewModel: AsteroidsViewModel
 ) {
     val state by viewModel.state
 

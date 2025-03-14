@@ -60,8 +60,8 @@ class EnemyRenderer(res: Resources) {
     ) {
         val color = getColor(state, time)
         val scale = when (state.level) {
-            EnemyState.Level.REGULAR -> AstConst.Enemy.SCALE_LVL_0
-            EnemyState.Level.BOSS -> AstConst.Enemy.SCALE_LVL_1
+            EnemyState.Level.REGULAR -> AstConst.Enemy.SCALE_REGULAR
+            EnemyState.Level.BOSS -> AstConst.Enemy.SCALE_BOSS
         }
 
         Matrix.setIdentityM(_modelMatrix, 0)

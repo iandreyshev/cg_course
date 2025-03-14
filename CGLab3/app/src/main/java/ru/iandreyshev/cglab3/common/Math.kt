@@ -49,6 +49,5 @@ fun degreesToNormalizedVector(angleDegrees: Float): Offset {
     val angleRadians = Math.toRadians(angleDegrees.toDouble()) // Перевод градусов в радианы
     val x = cos(angleRadians).toFloat()
     val y = sin(angleRadians).toFloat()
-    println("Direction: ${Offset(x, y)}")
     return Offset(x, y) // Возвращаем нормализованный вектор (единичной длины)
 }

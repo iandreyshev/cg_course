@@ -1,6 +1,7 @@
 package ru.iandreyshev.cglab3.asteroids.domain
 
 import androidx.compose.ui.geometry.Offset
+import ru.iandreyshev.cglab3.asteroids.domain.EnemyState.Level.*
 
 data class EnemyState(
     val position: Offset,
@@ -8,7 +9,8 @@ data class EnemyState(
     val rotation: Float,
     val rotationSpeed: Float,
     val direction: Offset,
-    val speed: Float
+    val speed: Float,
+    val health: Int
 ) {
     enum class Level {
         REGULAR,
@@ -18,7 +20,10 @@ data class EnemyState(
     companion object {
         fun random(
             position: Offset,
-            level: Level = if ((1..100).random() < AstConst.Enemy.SPAWN_BOSS_PROBABILITY_PERCENT) Level.BOSS else Level.REGULAR,
+            level: Level = when {
+                (1..100).random() < AstConst.Enemy.SPAWN_BOSS_PROBABILITY_PERCENT -> BOSS
+                else -> REGULAR
+            },
             rotation: Float = (0..360).random().toFloat(),
             rotationSpeed: Float = (AstConst.Enemy.MIN_ROTATION_SPEED_DEG..AstConst.Enemy.MAX_ROTATION_SPEED_DEG).random()
                 .toFloat(),
@@ -31,6 +36,10 @@ data class EnemyState(
             rotationSpeed = rotationSpeed,
             direction = direction,
             speed = speed,
+            health = when (level) {
+                REGULAR -> AstConst.Enemy.HEALTH_REGULAR
+                BOSS -> AstConst.Enemy.HEALTH_BOSS
+            }
         )
     }
 

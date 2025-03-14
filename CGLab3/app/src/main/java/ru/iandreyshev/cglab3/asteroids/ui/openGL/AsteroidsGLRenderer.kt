@@ -8,6 +8,7 @@ import androidx.compose.ui.geometry.Size
 import ru.iandreyshev.cglab3.asteroids.presentation.AsteroidsState
 import ru.iandreyshev.cglab3.asteroids.ui.openGL.objects.BulletRenderer
 import ru.iandreyshev.cglab3.asteroids.ui.openGL.objects.EnemyRenderer
+import ru.iandreyshev.cglab3.asteroids.ui.openGL.objects.ParticleRenderer
 import ru.iandreyshev.cglab3.asteroids.ui.openGL.objects.ShipRenderer
 import ru.iandreyshev.cglab3.asteroids.ui.openGL.objects.StarRenderer
 import javax.microedition.khronos.egl.EGLConfig
@@ -25,6 +26,7 @@ class AsteroidsGLRenderer(
     private lateinit var _shipRenderer: ShipRenderer
     private lateinit var _enemyRenderer: EnemyRenderer
     private lateinit var _bulletRenderer: BulletRenderer
+    private lateinit var _particleRenderer: ParticleRenderer
     private lateinit var _starRenderer: StarRenderer
 
     init {
@@ -49,6 +51,7 @@ class AsteroidsGLRenderer(
         _shipRenderer = ShipRenderer(res)
         _enemyRenderer = EnemyRenderer(res)
         _bulletRenderer = BulletRenderer(res)
+        _particleRenderer = ParticleRenderer(res)
         _starRenderer = StarRenderer(res, )
     }
 
@@ -67,6 +70,9 @@ class AsteroidsGLRenderer(
         }
         _state.stars.forEach {
             _starRenderer.draw(it, _viewMatrix, _projectionMatrix)
+        }
+        _state.particles.forEach {
+            _particleRenderer.draw(it, _viewMatrix, _projectionMatrix)
         }
         _state.ship?.let {
             _shipRenderer.draw(it, _viewMatrix, _projectionMatrix)

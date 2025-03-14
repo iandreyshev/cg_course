@@ -8,13 +8,14 @@ import kotlinx.coroutines.launch
 import ru.iandreyshev.cglab3.asteroids.domain.AstConst
 import ru.iandreyshev.cglab3.asteroids.domain.BulletState
 import ru.iandreyshev.cglab3.asteroids.domain.EnemyState
-import ru.iandreyshev.cglab3.asteroids.domain.ShipState
+import ru.iandreyshev.cglab3.asteroids.domain.ParticleState
 import ru.iandreyshev.cglab3.asteroids.presentation.GamePhase.GAME_OVER
 import ru.iandreyshev.cglab3.asteroids.presentation.GamePhase.PLAYING
 import ru.iandreyshev.cglab3.asteroids.presentation.GamePhase.START
 import ru.iandreyshev.cglab3.common.BaseViewModel
 import ru.iandreyshev.cglab3.common.circlesIntersect
 import ru.iandreyshev.cglab3.common.degreesToNormalizedVector
+import ru.iandreyshev.cglab3.common.distanceTo
 import ru.iandreyshev.cglab3.common.normalize
 import ru.iandreyshev.cglab3.common.randomPointOnCircle
 import kotlin.math.abs
@@ -26,7 +27,9 @@ import kotlin.random.Random.Default.nextDouble
 
 private const val MILLIS_IN_SEC = 1000L
 
-class AsteroidsViewModel : BaseViewModel<AsteroidsState, Any>(
+class AsteroidsViewModel(
+    private val soundPlayer: SoundPlayer,
+) : BaseViewModel<AsteroidsState, Any>(
     initialState = AsteroidsState()
 ) {
     private var _stickFieldCenter = Offset.Zero
@@ -73,18 +76,12 @@ class AsteroidsViewModel : BaseViewModel<AsteroidsState, Any>(
             START,
             GAME_OVER -> {
                 updateState {
-                    copy(
-                        phase = PLAYING,
-                        score = 0,
-                        ship = ShipState(),
-                        enemies = emptyList(),
-                        bullets = emptyList(),
-                        stars = emptyList(),
-                    )
+                    toPlayingState()
                 }
             }
 
             PLAYING -> {
+                soundPlayer.play(Sound.FIRE)
                 _isFireHandled = false
             }
         }
@@ -112,14 +109,15 @@ class AsteroidsViewModel : BaseViewModel<AsteroidsState, Any>(
     private fun doFrameTick(elapsedTime: Float) = updateState {
         when (stateValue.phase) {
             START,
-            GAME_OVER -> //handleEnemiesMove(elapsedTime)
-                handleStarsMove(elapsedTime)
+            GAME_OVER -> handleStarsMove(elapsedTime)
                 .handleStarsSpawn()
 
             PLAYING -> handleCollisions()
+                .handleEnemyHealth()
                 .handleShipMove(elapsedTime)
                 .handleEnemiesMove(elapsedTime)
                 .handleBulletsMove(elapsedTime)
+                .handleParticlesMove(elapsedTime)
                 .handleEnemiesSpawn()
                 .handleBulletsSpawn()
         }
@@ -128,44 +126,24 @@ class AsteroidsViewModel : BaseViewModel<AsteroidsState, Any>(
     private fun AsteroidsState.handleCollisions(): AsteroidsState {
         ship ?: return this
 
-        var points = 0
-        val newEnemies = mutableListOf<EnemyState>()
-        val aliveEnemies = mutableListOf<EnemyState>()
+        val newParticles = mutableListOf<ParticleState>()
         var aliveBullets = bullets
 
-        enemies.forEach { enemy ->
-            val enemyRadius = AstConst.Enemy.RADIUS * AstConst.Enemy.SCALE_LVL_0
+        val aliveEnemies = enemies.map { enemy ->
+            val enemyRadius = AstConst.Enemy.RADIUS * AstConst.Enemy.SCALE_REGULAR
 
             if (circlesIntersect(enemy.position, enemyRadius, ship.pos, 30f)) {
-                return copy(
-                    phase = GAME_OVER,
-                    ship = null,
-                    enemies = emptyList(),
-                    bullets = emptyList()
-                )
+                soundPlayer.play(Sound.GAME_OVER)
+                return toGameOverState()
             }
 
-            var isEnemyAlive = true
+            var enemyDamage = 0
             aliveBullets = aliveBullets.mapNotNull { bullet ->
                 when {
                     circlesIntersect(enemy.position, enemyRadius, bullet.position, AstConst.Bullet.RADIUS) -> {
-                        if (enemy.level == EnemyState.Level.BOSS) {
-                            newEnemies += EnemyState.random(
-                                position = enemy.position,
-                                level = EnemyState.Level.REGULAR,
-                                direction = enemyRandomDirection(enemy.direction)
-                            )
-                            newEnemies += EnemyState.random(
-                                position = enemy.position,
-                                level = EnemyState.Level.REGULAR,
-                                direction = enemyRandomDirection(enemy.direction)
-                            )
-                            points += AstConst.POINTS_PER_BOSS_ENEMY
-                        } else {
-                            points += AstConst.POINTS_PER_REGULAR_ENEMY
-                        }
-
-                        isEnemyAlive = false
+                        newParticles += createParticles(bullet.position)
+                        soundPlayer.play(Sound.HIT_ENEMY)
+                        ++enemyDamage
                         return@mapNotNull null
                     }
 
@@ -173,15 +151,38 @@ class AsteroidsViewModel : BaseViewModel<AsteroidsState, Any>(
                 }
             }
 
-            if (isEnemyAlive) {
-                aliveEnemies += enemy
+            enemy.copy(health = enemy.health - enemyDamage)
+        }
+
+        return copy(
+            enemies = aliveEnemies,
+            bullets = aliveBullets,
+            particles = particles + newParticles
+        )
+    }
+
+    private fun AsteroidsState.handleEnemyHealth(): AsteroidsState {
+        var points = 0
+        val newEnemies = mutableListOf<EnemyState>()
+        val aliveEnemies = enemies.filter { enemy ->
+            val isDead = enemy.health <= 0
+
+            if (isDead) {
+                if (enemy.level == EnemyState.Level.BOSS) {
+                    newEnemies += createEnemiesOnBossKill(enemy)
+                    points += AstConst.POINTS_PER_BOSS_ENEMY
+                } else {
+                    points += AstConst.POINTS_PER_REGULAR_ENEMY
+                }
+                soundPlayer.play(Sound.KILL_ENEMY)
             }
+
+            return@filter !isDead
         }
 
         return copy(
             score = score + points,
-            enemies = aliveEnemies + newEnemies,
-            bullets = aliveBullets
+            enemies = aliveEnemies + newEnemies
         )
     }
 
@@ -223,6 +224,16 @@ class AsteroidsViewModel : BaseViewModel<AsteroidsState, Any>(
         })
     }
 
+    private fun AsteroidsState.handleParticlesMove(elapsedTime: Float): AsteroidsState =
+        copy(particles = particles.mapNotNull { particleState ->
+            if (particleState.position.distanceTo(particleState.startPosition) > AstConst.Particle.MAX_DISTANCE) {
+                return@mapNotNull null
+            }
+
+            val move = particleState.direction * AstConst.Particle.SPEED * elapsedTime
+            particleState.copy(position = particleState.position + move)
+        })
+
     private fun AsteroidsState.handleEnemiesSpawn(): AsteroidsState {
         val worldSize = _worldSize ?: return this
 
@@ -239,7 +250,7 @@ class AsteroidsViewModel : BaseViewModel<AsteroidsState, Any>(
         val spawnPosition = randomPointOnCircle(worldSize.height / 2f)
         val newEnemy = EnemyState.random(
             position = spawnPosition,
-            direction = enemyRandomDirection(Offset.Zero - spawnPosition)
+            direction = enemyRandomDirection(Offset.Zero - spawnPosition, AstConst.Enemy.DIRECTION_CONE_DEGREE)
         )
 
         return copy(enemies = enemies + newEnemy)
@@ -312,13 +323,42 @@ class AsteroidsViewModel : BaseViewModel<AsteroidsState, Any>(
         )
     }
 
-    private fun enemyRandomDirection(direction: Offset): Offset {
+    private fun createEnemiesOnBossKill(boss: EnemyState) = listOf(
+        EnemyState.random(
+            position = boss.position,
+            level = EnemyState.Level.REGULAR,
+            direction = enemyRandomDirection(boss.direction, 120f)
+        ),
+        EnemyState.random(
+            position = boss.position,
+            level = EnemyState.Level.REGULAR,
+            direction = enemyRandomDirection(boss.direction, 120f)
+        )
+    )
+
+    private fun createParticles(position: Offset): List<ParticleState> {
+        val result = mutableListOf<ParticleState>()
+        var degrees = 0f
+
+        while (degrees < 360f) {
+            result += ParticleState(
+                startPosition = position,
+                position = position,
+                direction = degreesToNormalizedVector(degrees)
+            )
+            degrees += AstConst.Particle.SPAWN_DEGREE_OFFSET
+        }
+
+        return result
+    }
+
+    private fun enemyRandomDirection(direction: Offset, coneDegree: Float): Offset {
         val normalizedDirection = direction.normalize()
         val alpha = atan2(normalizedDirection.y, normalizedDirection.x)
 
         // Выбираем случайный угол отклонения в диапазоне [-leftDeg, rightDeg]
-        val coneDegree = AstConst.Enemy.DIRECTION_CONE_DEGREE
-        val randomOffsetRad = nextDouble(-coneDegree, coneDegree)
+        val halfCone = (abs(coneDegree) / 2).toDouble()
+        val randomOffsetRad = nextDouble(-halfCone, halfCone)
             .let(Math::toRadians)
 
         // Итоговый угол = угол direction + случайное отклонение

@@ -5,14 +5,15 @@ import android.opengl.GLES30
 import android.opengl.Matrix
 import ru.iandreyshev.cglab3.R
 import ru.iandreyshev.cglab3.asteroids.domain.AstConst
-import ru.iandreyshev.cglab3.asteroids.domain.BulletState
+import ru.iandreyshev.cglab3.asteroids.domain.ParticleState
+import ru.iandreyshev.cglab3.asteroids.ui.AstColors
 import ru.iandreyshev.cglab3.common.createProgramGLES30
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
 private const val COORDS_PER_VERTEX = 2
 
-class BulletRenderer(res: Resources) {
+class ParticleRenderer(res: Resources) {
     private var _program = createProgramGLES30(res, R.raw.bullet_vert, R.raw.bullet_frag)
 
     private val _modelMatrix = FloatArray(16)
@@ -32,10 +33,10 @@ class BulletRenderer(res: Resources) {
                 position(0)
             }
         }
-    private var _color = floatArrayOf(1f, 1f, 1f, 1f)
+    private var _color = floatArrayOf(AstColors.red.red, AstColors.red.green, AstColors.red.blue, 1.0f)
 
     fun draw(
-        state: BulletState,
+        state: ParticleState,
         viewMatrix: FloatArray,
         projectionMatrix: FloatArray
     ) {
@@ -64,7 +65,7 @@ class BulletRenderer(res: Resources) {
         )
 
         _pointSizeHandle = GLES30.glGetUniformLocation(_program, "vPointSize")
-        GLES30.glUniform1f(_pointSizeHandle, AstConst.Bullet.RADIUS * 2)
+        GLES30.glUniform1f(_pointSizeHandle, AstConst.Particle.RADIUS * 2)
 
         _colorHandle = GLES30.glGetUniformLocation(_program, "vColor")
         GLES30.glUniform4fv(_colorHandle, 1, _color, 0)
