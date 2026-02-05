@@ -1,7 +1,8 @@
 package ru.iandreyshev.cglabs.menu
 
 data class MenuState(
-    val labs: List<MenuLab>
+    val labs: List<MenuLab>,
+    val expandedLabs: Set<Int> = emptySet()
 )
 
 data class MenuLab(

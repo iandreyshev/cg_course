@@ -47,4 +47,7 @@ object Lab3 {
 object Lab4 {
     @Serializable
     object Figure
+
+    @Serializable
+    object StellatedDodecahedron
 }

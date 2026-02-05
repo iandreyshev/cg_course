@@ -32,6 +32,7 @@ import ru.iandreyshev.cglab3.asteroids.ui.AsteroidsScreen
 import ru.iandreyshev.cglab3.bezier.ui.BezierScreen
 import ru.iandreyshev.cglab3.guide.GuideScreen
 import ru.iandreyshev.cglab4.figure.ui.FigureScreen
+import ru.iandreyshev.cglab4.stellateddodecahedron.ui.StellatedDodecahedronScreen
 import ru.iandreyshev.cglabs.menu.MenuScreen
 
 @Composable
@@ -75,7 +76,8 @@ private fun NavGraphBuilder.buildMenuNavigation(navController: NavHostController
                 task("Игра Asteroids", "", Lab3.Asteroids)
             }
             lab(4, "Основы визуализации трехмерных объектов") {
-                task("Третья звездчатая форма додекаэдра", "", Lab4.Figure)
+                task("Куб (черновик)", "", Lab4.Figure)
+                task("Третья звёздчатая форма додекаэдра", "12 пентаграмм, 20 вершин, 30 рёбер", Lab4.StellatedDodecahedron)
             }
         }
     }
@@ -172,5 +174,8 @@ private fun NavGraphBuilder.buildLab3Navigation(context: Context) {
 private fun NavGraphBuilder.buildLab4Navigation(context: Context) {
     composable<Lab4.Figure> {
         FigureScreen()
+    }
+    composable<Lab4.StellatedDodecahedron> {
+        StellatedDodecahedronScreen()
     }
 }

@@ -21,11 +21,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 # Clean build
 ./gradlew clean build
 
+# Build debug APK
+./gradlew assembleDebug
+
 # Install on connected device/emulator
 ./gradlew installDebug
-
-# Run app module
-./gradlew :app:run
 ```
 
 ### Build Individual Modules
@@ -44,7 +44,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 # Run tests for specific module
 ./gradlew :app:test
-./gradlew :core:test
+
+# Run a single test class
+./gradlew :core:testDebugUnitTest --tests "ru.iandreyshev.core.SomeTest"
 ```
 
 ### Dependency Management
@@ -59,16 +61,19 @@ All dependencies are centralized in `gradle/libs.versions.toml`. When adding dep
 
 ```
 CGLabs/
-├── app/              # Application module - navigation and menu
-├── core/             # Shared utilities and base classes
-├── lab1/             # 2D Canvas graphics basics
-├── lab2/             # 2D computer graphics programming
-├── lab3/             # OpenGL graphics fundamentals
-├── lab4/             # 3D object visualization
-└── libs/
-    ├── ui/           # Reusable Compose components
-    └── utils/        # Common utilities
+├── app/                  # Application module - navigation and menu
+└── modules/
+    ├── core/             # Shared utilities and base classes
+    ├── lab1/             # 2D Canvas graphics basics
+    ├── lab2/             # 2D computer graphics programming
+    ├── lab3/             # OpenGL graphics fundamentals
+    ├── lab4/             # 3D object visualization
+    └── libs/
+        ├── ui/           # Reusable Compose components
+        └── utils/        # Common utilities
 ```
+
+Note: Modules are mapped via `settings.gradle.kts` so Gradle references use `:core`, `:lab1`, etc.
 
 **Module Namespaces:**
 - `app`: `ru.iandreyshev.cglabs`
@@ -133,7 +138,6 @@ class MyGLRenderer : GLSurfaceView.Renderer {
 
     override fun onDrawFrame(gl: GL10) {
         GLES30.glClear(GLES30.GL_COLOR_BUFFER_BIT)
-        // Render objects
     }
 
     override fun onSurfaceChanged(gl: GL10, width: Int, height: Int) {
@@ -196,7 +200,7 @@ cglab{N}/
 
 ### Color Management
 - `Color.kt` provides `Color.toFloatArray()` extension for OpenGL
-- Converts Compose Color to RGBA float array `[r, g, f, a]`
+- Converts Compose Color to RGBA float array `[r, g, b, a]`
 
 ### Math Utilities
 - `Math.kt` - Common math operations
@@ -223,8 +227,10 @@ When adding new tasks:
 ## Working with Dependencies
 
 ### Adding New Lab Module
-1. Create module directory: `mkdir lab{N}`
-2. Add to `settings.gradle.kts`: `include(":lab{N}")`
+1. Create module directory: `mkdir modules/lab{N}`
+2. Add to `settings.gradle.kts`:
+   - `include(":lab{N}")`
+   - `project(":lab{N}").projectDir = file("modules/lab{N}")`
 3. Create `build.gradle.kts` following existing lab patterns
 4. Add dependency in `app/build.gradle.kts`: `implementation(project(":lab{N}"))`
 5. Update `MainNavHost.kt` with navigation routes

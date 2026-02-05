@@ -23,8 +23,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -47,10 +45,6 @@ fun MenuScreen(
         MenuViewModel(menuLabBuilder.items)
     }
     val state by viewModel.state
-    val isExpandedMap = remember {
-        MutableList(state.labs.size) { false }
-            .toMutableStateList()
-    }
 
     Scaffold(
         modifier = Modifier.windowInsetsPadding(WindowInsets.systemBars),
@@ -60,8 +54,8 @@ fun MenuScreen(
             modifier = Modifier.padding(innerPadding),
         ) {
             state.labs.forEachIndexed { index, menuLab ->
-                MenuRow(menuLab, isExpandedMap[index]) {
-                    isExpandedMap[index] = !isExpandedMap[index]
+                MenuRow(menuLab, index in state.expandedLabs) {
+                    viewModel.toggleLab(index)
                 }
             }
         }
