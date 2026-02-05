@@ -2,30 +2,33 @@ package ru.iandreyshev.cglabs.menu
 
 import androidx.navigation.NavController
 
-class MenuBuilder(
-    private val navController: NavController
-) {
-    val items: List<MenuItemState>
+class MenuBuilder(private val navController: NavController) {
+
+    val items: List<MenuLab>
         get() = _items
 
-    private val _menuLabBuilder = MenuLabBuilder(navController) {
-        _items.add(it)
-    }
-    private val _items = mutableListOf<MenuItemState>()
+    private val _items = mutableListOf<MenuLab>()
 
     fun lab(number: Int, title: String, builder: MenuLabBuilder.() -> Unit) {
-        _items += MenuItemState("$number. ", title, isHeader = true)
-        _menuLabBuilder.builder()
+        val tasks = mutableListOf<MenuLabTask>()
+        val menuLabBuilder = MenuLabBuilder(navController) {
+            tasks.add(it)
+        }
+        menuLabBuilder.builder()
+        _items += MenuLab(number, title, tasks)
     }
+
 }
 
 class MenuLabBuilder(
     private val navController: NavController,
-    private val onAddTask: (MenuItemState) -> Unit
+    private val onAddTask: (MenuLabTask) -> Unit
 ) {
-    fun task(title: String, navigationRoute: Any) {
-        onAddTask(MenuItemState(title) {
-            navController.navigate(navigationRoute)
+
+    fun task(title: String, description: String = "", route: Any) {
+        onAddTask(MenuLabTask(title, description) {
+            navController.navigate(route)
         })
     }
+
 }

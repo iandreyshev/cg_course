@@ -22,6 +22,7 @@ data class AsteroidsState(
     fun toPlayingState() = copy(
         phase = PLAYING,
         score = 0,
+        stickCenter = null,
         ship = ShipState(),
         enemies = emptyList(),
         bullets = emptyList(),
@@ -31,6 +32,7 @@ data class AsteroidsState(
     fun toGameOverState() = copy(
         phase = GAME_OVER,
         ship = null,
+        stickCenter = null,
         enemies = emptyList(),
         bullets = emptyList(),
         particles = emptyList()

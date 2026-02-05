@@ -65,7 +65,7 @@ fun AsteroidsScreen(
             .windowInsetsPadding(WindowInsets.systemBars)
             .padding(horizontal = 16.dp, vertical = 24.dp)
     ) {
-        GameScene(state, viewModel::onUpdateWorldSize, viewModel::onRestart)
+        GameScene(state, viewModel::onUpdateWorldSize, viewModel::onFireClick)
         Spacer(modifier = Modifier.height(20.dp))
         GameController(
             isFireEnabled = state.phase != GAME_OVER,

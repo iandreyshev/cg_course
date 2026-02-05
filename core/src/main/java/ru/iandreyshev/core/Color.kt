@@ -13,3 +13,5 @@ val Pink40 = Color(0xFF7D5260)
 val ThemeBlue = Color(0xFF375E97)
 val ThemeRed = Color(0xFFFB6542)
 val ThemeYellow = Color(0xFFFFBB00)
+
+fun Color.floatArray() = floatArrayOf(red, green, blue, alpha)

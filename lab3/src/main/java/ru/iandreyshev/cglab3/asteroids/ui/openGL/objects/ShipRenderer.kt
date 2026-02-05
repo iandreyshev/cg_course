@@ -50,6 +50,8 @@ class ShipRenderer(res: Resources) {
     ) { // pass in the calculated transformation matrix
         Matrix.setIdentityM(_modelMatrix, 0)
         Matrix.translateM(_modelMatrix, 0, state.pos.x, state.pos.y, 0f)
+
+        println("state.rotation: ${state.rotation}")
         Matrix.rotateM(_modelMatrix, 0, state.rotation, 0f, 0f, 1f)
 
         Matrix.multiplyMM(_viewModelMatrix, 0, viewMatrix, 0, _modelMatrix, 0)

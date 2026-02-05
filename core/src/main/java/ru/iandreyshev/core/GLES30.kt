@@ -2,6 +2,7 @@ package ru.iandreyshev.core
 
 import android.content.res.Resources
 import android.opengl.GLES30
+import android.util.Log
 import androidx.annotation.RawRes
 
 fun createProgramGLES30(
@@ -18,4 +19,11 @@ fun createProgramGLES30(
 
     // creates OpenGL ES program executables
     GLES30.glLinkProgram(it)
+}
+
+fun handleErrorsGLES30() {
+    var error: Int
+    while ((GLES30.glGetError().also { error = it }) != GLES30.GL_NO_ERROR) {
+        Log.e("OpenGL", "Error: $error")
+    }
 }

@@ -2,7 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
-    kotlin("plugin.serialization") version "2.0.21"
+    kotlin("plugin.serialization") version "2.2.0"
 }
 
 android {
@@ -36,6 +36,7 @@ dependencies {
     implementation(project(":lab1"))
     implementation(project(":lab2"))
     implementation(project(":lab3"))
+    implementation(project(":lab4"))
 
     implementation(libs.kotlinx.serialization.json)
 

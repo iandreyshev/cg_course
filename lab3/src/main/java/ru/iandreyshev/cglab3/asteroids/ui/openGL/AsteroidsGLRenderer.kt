@@ -4,6 +4,7 @@ import android.content.res.Resources
 import android.opengl.GLES30
 import android.opengl.GLSurfaceView
 import android.opengl.Matrix
+import android.util.Log
 import androidx.compose.ui.geometry.Size
 import ru.iandreyshev.cglab3.asteroids.presentation.AsteroidsState
 import ru.iandreyshev.cglab3.asteroids.ui.openGL.objects.BulletRenderer
@@ -11,8 +12,10 @@ import ru.iandreyshev.cglab3.asteroids.ui.openGL.objects.EnemyRenderer
 import ru.iandreyshev.cglab3.asteroids.ui.openGL.objects.ParticleRenderer
 import ru.iandreyshev.cglab3.asteroids.ui.openGL.objects.ShipRenderer
 import ru.iandreyshev.cglab3.asteroids.ui.openGL.objects.StarRenderer
+import ru.iandreyshev.core.handleErrorsGLES30
 import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.opengles.GL10
+
 
 class AsteroidsGLRenderer(
     private val res: Resources
@@ -52,7 +55,7 @@ class AsteroidsGLRenderer(
         _enemyRenderer = EnemyRenderer(res)
         _bulletRenderer = BulletRenderer(res)
         _particleRenderer = ParticleRenderer(res)
-        _starRenderer = StarRenderer(res, )
+        _starRenderer = StarRenderer(res)
     }
 
     override fun onDrawFrame(unused: GL10) {
@@ -77,6 +80,8 @@ class AsteroidsGLRenderer(
         _state.ship?.let {
             _shipRenderer.draw(it, _viewMatrix, _projectionMatrix)
         }
+
+        handleErrorsGLES30()
     }
 
     override fun onSurfaceChanged(unused: GL10, width: Int, height: Int) {

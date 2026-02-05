@@ -12,10 +12,7 @@ enum class Sound {
     GAME_OVER,
 }
 
-class SoundPlayer(
-    context: Context
-) {
-
+class SoundPlayer(context: Context) {
     private val _sounds = mutableMapOf<Sound, Int>()
     private val _soundPool: SoundPool
     private var _lastId: Int? = null

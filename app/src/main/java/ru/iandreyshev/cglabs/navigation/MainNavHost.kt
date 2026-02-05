@@ -31,11 +31,11 @@ import ru.iandreyshev.cglab2.ui.viewImages.ViewImagesScreen
 import ru.iandreyshev.cglab3.asteroids.ui.AsteroidsScreen
 import ru.iandreyshev.cglab3.bezier.ui.BezierScreen
 import ru.iandreyshev.cglab3.guide.GuideScreen
+import ru.iandreyshev.cglab4.figure.ui.FigureScreen
 import ru.iandreyshev.cglabs.menu.MenuScreen
 
 @Composable
 fun MainNavHost(
-    modifier: Modifier = Modifier,
     navController: NavHostController = rememberNavController()
 ) {
     val context = LocalContext.current
@@ -43,7 +43,7 @@ fun MainNavHost(
     val displayMetrics = resources.displayMetrics
 
     NavHost(
-        modifier = modifier,
+        modifier = Modifier,
         navController = navController,
         startDestination = Menu
     ) {
@@ -51,6 +51,7 @@ fun MainNavHost(
         buildLab1Navigation(displayMetrics, navController)
         buildLab2Navigation(context, resources, displayMetrics, navController)
         buildLab3Navigation(context)
+        buildLab4Navigation(context)
     }
 }
 
@@ -58,20 +59,23 @@ private fun NavGraphBuilder.buildMenuNavigation(navController: NavHostController
     composable<Menu> {
         MenuScreen(navController) {
             lab(1, "Основы создания графических приложений") {
-                task("Инициалы", Lab1.Initials)
-                task("Алгоритм Бресенхэма", Lab1.BresenhamCircle)
-                task("Дом", Lab1.House)
-                task("Игра Висилица", Lab1.Hangman)
+                task("Инициалы", "Рисование и анимирование инициалов на канвасе", Lab1.Initials)
+                task("Алгоритм Бресенхэма", "", Lab1.BresenhamCircle)
+                task("Дом", "", Lab1.House)
+                task("Игра Висилица", "", Lab1.Hangman)
             }
             lab(2, "Программирование двухмерной компьютерной графики") {
-                task("Просмотр картинки", Lab2.ViewImages)
-                task("Игра Алхимия", Lab2.AlchemistryCraft)
-                task("Редактор историй", Lab2.StoryEditor)
+                task("Просмотр картинки", "", Lab2.ViewImages)
+                task("Игра Алхимия", "", Lab2.AlchemistryCraft)
+                task("Редактор историй", "", Lab2.StoryEditor)
             }
             lab(3, "Основы программирования компьютерной графики при помощи OpenGL") {
-                task("Треугольник (черновик)", Lab3.Guide)
-                task("Кривая Безье", Lab3.Bezier)
-                task("Игра Asteroids", Lab3.Asteroids)
+                task("Треугольник (черновик)", "", Lab3.Guide)
+                task("Кривая Безье", "", Lab3.Bezier)
+                task("Игра Asteroids", "", Lab3.Asteroids)
+            }
+            lab(4, "Основы визуализации трехмерных объектов") {
+                task("Третья звездчатая форма додекаэдра", "", Lab4.Figure)
             }
         }
     }
@@ -162,5 +166,11 @@ private fun NavGraphBuilder.buildLab3Navigation(context: Context) {
     }
     composable<Lab3.Asteroids> {
         AsteroidsScreen(context)
+    }
+}
+
+private fun NavGraphBuilder.buildLab4Navigation(context: Context) {
+    composable<Lab4.Figure> {
+        FigureScreen()
     }
 }

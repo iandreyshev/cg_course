@@ -10,12 +10,11 @@ import ru.iandreyshev.cglab3.asteroids.domain.BulletState
 import ru.iandreyshev.core.createProgramGLES30
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
-import java.nio.FloatBuffer
 
 private const val COORDS_PER_VERTEX = 2
 
 class StarRenderer(res: Resources) {
-    private var _program = createProgramGLES30(res, R.raw.bullet_vert, R.raw.star_frag)
+    private var _program = createProgramGLES30(res, R.raw.star_vert, R.raw.star_frag)
 
     private val _modelMatrix = FloatArray(16)
     private val _viewModelMatrix = FloatArray(16)

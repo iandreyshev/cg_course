@@ -43,3 +43,8 @@ object Lab3 {
     @Serializable
     object Asteroids
 }
+
+object Lab4 {
+    @Serializable
+    object Figure
+}

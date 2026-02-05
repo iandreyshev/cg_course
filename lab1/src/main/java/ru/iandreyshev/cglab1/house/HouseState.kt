@@ -5,8 +5,10 @@ import androidx.compose.ui.geometry.Offset
 data class HouseState(
     val pos1X: Float = 0f,
     val pos1Y: Float = 0f,
+
     val pos2X: Float = 0f,
     val pos2Y: Float = 0f,
+
     val dragState: DragState = DragState.NO_DRAG
 ) {
 

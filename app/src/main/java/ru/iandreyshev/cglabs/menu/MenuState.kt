@@ -1,12 +1,17 @@
 package ru.iandreyshev.cglabs.menu
 
 data class MenuState(
-    val items: List<MenuItemState>
+    val labs: List<MenuLab>
 )
 
-data class MenuItemState(
+data class MenuLab(
+    val number: Int,
     val title: String,
-    val description: String = "",
-    val isHeader: Boolean = false,
-    val onOpen: () -> Unit = {}
+    val tasks: List<MenuLabTask>
+)
+
+data class MenuLabTask(
+    val title: String,
+    val description: String,
+    val onOpen: () -> Unit
 )
