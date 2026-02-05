@@ -16,6 +16,7 @@ import androidx.compose.ui.input.pointer.util.VelocityTracker
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.viewmodel.compose.viewModel
 import ru.iandreyshev.cglab4.figure.presentation.FigureViewModel
+import kotlin.math.sqrt
 
 @Composable
 fun FigureScreen(
@@ -30,29 +31,51 @@ fun FigureScreen(
             .pointerInput(Unit) {
                 awaitEachGesture {
                     val velocityTracker = VelocityTracker()
+                    var previousDistance = 0f
+                    var isPinching = false
 
                     val down = awaitFirstDown()
                     down.consume()
 
                     while (true) {
                         val event = awaitPointerEvent()
-                        val change = event.changes.firstOrNull() ?: break
+                        val pressed = event.changes.filter { it.pressed }
 
-                        if (!change.pressed) {
-                            val velocity = velocityTracker.calculateVelocity()
-                            viewModel.onFling(Offset(velocity.x, velocity.y))
+                        if (pressed.isEmpty()) {
+                            if (!isPinching) {
+                                val velocity = velocityTracker.calculateVelocity()
+                                viewModel.onFling(Offset(velocity.x, velocity.y))
+                            }
                             break
                         }
 
-                        velocityTracker.addPosition(
-                            change.uptimeMillis,
-                            change.position
-                        )
+                        if (pressed.size >= 2) {
+                            isPinching = true
+                            val p1 = pressed[0].position
+                            val p2 = pressed[1].position
+                            val dx = p1.x - p2.x
+                            val dy = p1.y - p2.y
+                            val distance = sqrt(dx * dx + dy * dy)
 
-                        val dragAmount = change.positionChange()
-                        if (dragAmount != Offset.Zero) {
-                            viewModel.onDrag(dragAmount)
-                            change.consume()
+                            if (previousDistance > 0f) {
+                                val scaleFactor = distance / previousDistance
+                                viewModel.onScale(scaleFactor)
+                            }
+                            previousDistance = distance
+
+                            event.changes.forEach { it.consume() }
+                        } else if (!isPinching) {
+                            val change = pressed[0]
+                            velocityTracker.addPosition(
+                                change.uptimeMillis,
+                                change.position
+                            )
+
+                            val dragAmount = change.positionChange()
+                            if (dragAmount != Offset.Zero) {
+                                viewModel.onDrag(dragAmount)
+                                change.consume()
+                            }
                         }
                     }
                 }

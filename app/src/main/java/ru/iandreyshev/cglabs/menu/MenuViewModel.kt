@@ -10,9 +10,9 @@ class MenuViewModel(
     fun toggleLab(labIndex: Int) {
         updateState {
             val newExpanded = if (labIndex in expandedLabs) {
-                expandedLabs - labIndex
+                emptySet()
             } else {
-                expandedLabs + labIndex
+                setOf(labIndex)
             }
             copy(expandedLabs = newExpanded)
         }

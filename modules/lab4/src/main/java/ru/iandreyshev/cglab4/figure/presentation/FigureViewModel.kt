@@ -22,6 +22,12 @@ class FigureViewModel : BaseViewModel<FigureState, Any>(
         }
     }
 
+    fun onScale(scaleFactor: Float) {
+        updateState {
+            copy(scale = (scale * scaleFactor).coerceIn(0.1f, 5f))
+        }
+    }
+
     fun onFling(velocity: Offset) {
         val scaledVelocity = velocity / 50f
 

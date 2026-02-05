@@ -127,6 +127,7 @@ class CubeRenderer(res: Resources) {
         projectionMatrix: FloatArray,
     ) {
         Matrix.setIdentityM(_modelMatrix, 0)
+        Matrix.scaleM(_modelMatrix, 0, state.scale, state.scale, state.scale)
         Matrix.rotateM(_modelMatrix, 0, state.rotation.y, 1f, 0f, 0f)
         Matrix.rotateM(_modelMatrix, 0, state.rotation.x, 0f, 1f, 0f)
 

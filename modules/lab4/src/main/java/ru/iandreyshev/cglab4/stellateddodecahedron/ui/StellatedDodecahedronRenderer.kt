@@ -15,11 +15,14 @@ private const val COORDS_PER_VERTEX = 3
 private const val COLORS_PER_VERTEX = 4
 
 /**
- * Great Stellated Dodecahedron (Третья звёздчатая форма додекаэдра)
+ * Большой звёздчатый додекаэдр (Great Stellated Dodecahedron)
  * Kepler-Poinsot polyhedron {5/2, 3}
- * - 12 pentagrammic faces (star pentagons)
- * - 20 vertices
- * - 30 edges
+ * Third stellation of the icosahedron.
+ * Construction: 20 three-sided pyramids (spikes) over the faces of a regular icosahedron,
+ * each spike apex lies on the ray from origin through the icosahedron face center at
+ * distance phi^2 from the origin.
+ * - 12 pentagrammic faces, 20 spike tips, 30 edges
+ * - 60 triangles for rendering (3 per icosahedron face × 20 faces)
  */
 class StellatedDodecahedronRenderer(res: Resources) {
 
@@ -30,70 +33,85 @@ class StellatedDodecahedronRenderer(res: Resources) {
     private val vertexCount: Int
 
     init {
-        val (verts, cols) = generateStellatedDodecahedron()
+        val (verts, cols) = generateGreatStellatedDodecahedron()
         vertices = verts
         colors = cols
         vertexCount = vertices.size / COORDS_PER_VERTEX
     }
 
-    private fun generateStellatedDodecahedron(): Pair<FloatArray, FloatArray> {
-        // 20 vertices of the great stellated dodecahedron
-        // Same as vertices of a regular dodecahedron
-        val dodecahedronVertices = listOf(
-            // Cube vertices (±1, ±1, ±1)
-            floatArrayOf(1f, 1f, 1f),
-            floatArrayOf(1f, 1f, -1f),
-            floatArrayOf(1f, -1f, 1f),
-            floatArrayOf(1f, -1f, -1f),
-            floatArrayOf(-1f, 1f, 1f),
-            floatArrayOf(-1f, 1f, -1f),
-            floatArrayOf(-1f, -1f, 1f),
-            floatArrayOf(-1f, -1f, -1f),
-            // Rectangle vertices (0, ±1/φ, ±φ)
-            floatArrayOf(0f, 1f/phi, phi),
-            floatArrayOf(0f, 1f/phi, -phi),
-            floatArrayOf(0f, -1f/phi, phi),
-            floatArrayOf(0f, -1f/phi, -phi),
-            // Rectangle vertices (±1/φ, ±φ, 0)
-            floatArrayOf(1f/phi, phi, 0f),
-            floatArrayOf(1f/phi, -phi, 0f),
-            floatArrayOf(-1f/phi, phi, 0f),
-            floatArrayOf(-1f/phi, -phi, 0f),
-            // Rectangle vertices (±φ, 0, ±1/φ)
-            floatArrayOf(phi, 0f, 1f/phi),
-            floatArrayOf(phi, 0f, -1f/phi),
-            floatArrayOf(-phi, 0f, 1f/phi),
-            floatArrayOf(-phi, 0f, -1f/phi),
+    private fun generateGreatStellatedDodecahedron(): Pair<FloatArray, FloatArray> {
+        // The great stellated dodecahedron is the third stellation of the icosahedron.
+        // Construction: take a regular icosahedron, then over each of its 20 triangular
+        // faces build a tall three-sided pyramid whose apex is a vertex of the outer
+        // dodecahedron. The result has 12 pentagrammic faces, 20 spike tips, 60 triangles.
+        //
+        // Step 1: Define the 12 vertices of the base icosahedron (normalized to unit sphere).
+        // Step 2: Define the 20 triangular faces of the icosahedron.
+        // Step 3: For each face, find the spike apex — the point of a regular dodecahedron
+        //         that lies directly above this face. The spike apex is at distance phi^2
+        //         from the origin (when icosahedron has circumradius 1).
+        // Step 4: Build 3 triangles per face (spike apex + each edge of the icosahedron face).
+
+        // 12 vertices of the regular icosahedron
+        val icoVertices = arrayOf(
+            floatArrayOf( 0f,  1f,  phi),   // 0
+            floatArrayOf( 0f,  1f, -phi),   // 1
+            floatArrayOf( 0f, -1f,  phi),   // 2
+            floatArrayOf( 0f, -1f, -phi),   // 3
+            floatArrayOf( 1f,  phi,  0f),   // 4
+            floatArrayOf( 1f, -phi,  0f),   // 5
+            floatArrayOf(-1f,  phi,  0f),   // 6
+            floatArrayOf(-1f, -phi,  0f),   // 7
+            floatArrayOf( phi,  0f,  1f),   // 8
+            floatArrayOf( phi,  0f, -1f),   // 9
+            floatArrayOf(-phi,  0f,  1f),   // 10
+            floatArrayOf(-phi,  0f, -1f),   // 11
         )
 
-        // Normalize vertices to unit sphere
-        val normalizedVerts = dodecahedronVertices.map { v ->
-            val len = sqrt(v[0]*v[0] + v[1]*v[1] + v[2]*v[2])
-            floatArrayOf(v[0]/len, v[1]/len, v[2]/len)
+        // Normalize icosahedron vertices to unit sphere
+        val icoNorm = icoVertices.map { v ->
+            val len = sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2])
+            floatArrayOf(v[0] / len, v[1] / len, v[2] / len)
         }
 
-        // 12 pentagonal faces of dodecahedron (indices into vertices)
-        // These define the base pentagons that we'll stellate
-        val pentagonFaces = listOf(
-            listOf(0, 8, 10, 2, 16),   // Front-right
-            listOf(0, 16, 17, 1, 12),  // Top-right
-            listOf(0, 12, 14, 4, 8),   // Top-front
-            listOf(1, 17, 3, 11, 9),   // Right-back
-            listOf(1, 9, 5, 14, 12),   // Top-back
-            listOf(2, 10, 6, 15, 13),  // Bottom-front
-            listOf(2, 13, 3, 17, 16),  // Right-bottom
-            listOf(3, 13, 15, 7, 11),  // Bottom-back
-            listOf(4, 14, 5, 19, 18),  // Left-top
-            listOf(4, 18, 6, 10, 8),   // Left-front
-            listOf(5, 9, 11, 7, 19),   // Back
-            listOf(6, 18, 19, 7, 15),  // Left-bottom
+        // 20 triangular faces of icosahedron
+        val icoFaces = arrayOf(
+            intArrayOf(0, 2, 8),
+            intArrayOf(0, 8, 4),
+            intArrayOf(0, 4, 6),
+            intArrayOf(0, 6, 10),
+            intArrayOf(0, 10, 2),
+            intArrayOf(1, 3, 11),
+            intArrayOf(1, 11, 6),
+            intArrayOf(1, 6, 4),
+            intArrayOf(1, 4, 9),
+            intArrayOf(1, 9, 3),
+            intArrayOf(2, 5, 8),
+            intArrayOf(2, 7, 5),
+            intArrayOf(2, 10, 7),
+            intArrayOf(3, 9, 5),
+            intArrayOf(3, 5, 7),
+            intArrayOf(3, 7, 11),
+            intArrayOf(4, 8, 9),
+            intArrayOf(5, 9, 8),
+            intArrayOf(6, 11, 10),
+            intArrayOf(7, 10, 11),
         )
 
-        val faceVertices = mutableListOf<Float>()
-        val faceColors = mutableListOf<Float>()
+        // For each icosahedron face, compute the spike apex.
+        // The apex lies along the outward face normal at a specific distance.
+        // For the great stellated dodecahedron, the spike tips are at the vertices
+        // of a dodecahedron scaled by phi^2 relative to the icosahedron circumradius.
+        // Spike height above the face center = phi^2 * circumradius_ico measured from origin
+        // along the face normal direction.
+        //
+        // More precisely: the apex = faceCenter normalized * phi^2
+        // (since each spike tip of the great stellated dodecahedron lies on the ray
+        // from the origin through the face center of the icosahedron, at distance phi^2).
+        val spikeRadius = phi * phi  // phi^2 ≈ 2.618
 
-        // Colors for 12 faces
-        val faceColorPalette = listOf(
+        // Colors — assign by face group (5 faces around top, 5 around equator-top, etc.)
+        val faceColorPalette = arrayOf(
             floatArrayOf(1.0f, 0.2f, 0.2f, 1.0f),   // Red
             floatArrayOf(0.2f, 1.0f, 0.2f, 1.0f),   // Green
             floatArrayOf(0.2f, 0.2f, 1.0f, 1.0f),   // Blue
@@ -106,105 +124,70 @@ class StellatedDodecahedronRenderer(res: Resources) {
             floatArrayOf(0.8f, 0.8f, 0.2f, 1.0f),   // Gold
             floatArrayOf(0.2f, 0.8f, 0.8f, 1.0f),   // Teal
             floatArrayOf(0.8f, 0.2f, 0.6f, 1.0f),   // Pink
+            floatArrayOf(0.9f, 0.4f, 0.1f, 1.0f),   // Burnt orange
+            floatArrayOf(0.4f, 0.1f, 0.9f, 1.0f),   // Indigo
+            floatArrayOf(0.1f, 0.9f, 0.4f, 1.0f),   // Emerald
+            floatArrayOf(0.9f, 0.9f, 0.5f, 1.0f),   // Light gold
+            floatArrayOf(0.5f, 0.9f, 0.9f, 1.0f),   // Light teal
+            floatArrayOf(0.9f, 0.5f, 0.9f, 1.0f),   // Light magenta
+            floatArrayOf(0.7f, 0.3f, 0.3f, 1.0f),   // Dark red
+            floatArrayOf(0.3f, 0.7f, 0.3f, 1.0f),   // Forest green
         )
 
-        // For each pentagon face, create a stellated (star) shape
-        for ((faceIndex, face) in pentagonFaces.withIndex()) {
+        val faceVertices = mutableListOf<Float>()
+        val faceColors = mutableListOf<Float>()
+
+        for ((faceIndex, face) in icoFaces.withIndex()) {
+            val v0 = icoNorm[face[0]]
+            val v1 = icoNorm[face[1]]
+            val v2 = icoNorm[face[2]]
+
+            // Face center direction (not normalized yet)
+            val cx = (v0[0] + v1[0] + v2[0]) / 3f
+            val cy = (v0[1] + v1[1] + v2[1]) / 3f
+            val cz = (v0[2] + v1[2] + v2[2]) / 3f
+            val cLen = sqrt(cx * cx + cy * cy + cz * cz)
+
+            // Spike apex: along face center direction at distance spikeRadius
+            val apex = floatArrayOf(
+                cx / cLen * spikeRadius,
+                cy / cLen * spikeRadius,
+                cz / cLen * spikeRadius
+            )
+
             val color = faceColorPalette[faceIndex % faceColorPalette.size]
 
-            // Get the 5 vertices of the pentagon
-            val v = face.map { normalizedVerts[it] }
+            // 3 triangles: apex with each edge of the icosahedron face
+            val faceTriVerts = arrayOf(v0, v1, v2)
+            for (i in 0 until 3) {
+                val a = apex
+                val b = faceTriVerts[i]
+                val c = faceTriVerts[(i + 1) % 3]
 
-            // Calculate center of pentagon
-            val center = floatArrayOf(
-                v.map { it[0] }.average().toFloat(),
-                v.map { it[1] }.average().toFloat(),
-                v.map { it[2] }.average().toFloat()
-            )
+                // Ensure outward-facing normal
+                val ab = floatArrayOf(b[0] - a[0], b[1] - a[1], b[2] - a[2])
+                val ac = floatArrayOf(c[0] - a[0], c[1] - a[1], c[2] - a[2])
+                val normal = cross(ab, ac)
 
-            // Calculate stellated points (extend beyond the original vertices)
-            // For great stellated dodecahedron, the spike extends by golden ratio
-            val spikeHeight = phi * 1.5f
+                // Triangle center
+                val tcx = (a[0] + b[0] + c[0]) / 3f
+                val tcy = (a[1] + b[1] + c[1]) / 3f
+                val tcz = (a[2] + b[2] + c[2]) / 3f
 
-            // Normal vector of the pentagon face
-            val edge1 = floatArrayOf(v[1][0]-v[0][0], v[1][1]-v[0][1], v[1][2]-v[0][2])
-            val edge2 = floatArrayOf(v[2][0]-v[0][0], v[2][1]-v[0][1], v[2][2]-v[0][2])
-            val normal = cross(edge1, edge2)
-            val normalLen = sqrt(normal[0]*normal[0] + normal[1]*normal[1] + normal[2]*normal[2])
-            normal[0] /= normalLen
-            normal[1] /= normalLen
-            normal[2] /= normalLen
+                val dot = normal[0] * tcx + normal[1] * tcy + normal[2] * tcz
 
-            // Determine if normal points outward
-            val centerToOrigin = floatArrayOf(-center[0], -center[1], -center[2])
-            val dot = normal[0]*centerToOrigin[0] + normal[1]*centerToOrigin[1] + normal[2]*centerToOrigin[2]
-            if (dot > 0) {
-                normal[0] = -normal[0]
-                normal[1] = -normal[1]
-                normal[2] = -normal[2]
-            }
-
-            // Spike apex
-            val apex = floatArrayOf(
-                center[0] + normal[0] * spikeHeight,
-                center[1] + normal[1] * spikeHeight,
-                center[2] + normal[2] * spikeHeight
-            )
-
-            // Create 5 triangular faces for the spike
-            for (i in 0 until 5) {
-                val v1 = v[i]
-                val v2 = v[(i + 1) % 5]
-
-                // Triangle: apex, v1, v2
-                faceVertices.addAll(apex.toList())
+                if (dot >= 0) {
+                    faceVertices.addAll(a.toList())
+                    faceVertices.addAll(b.toList())
+                    faceVertices.addAll(c.toList())
+                } else {
+                    faceVertices.addAll(a.toList())
+                    faceVertices.addAll(c.toList())
+                    faceVertices.addAll(b.toList())
+                }
                 faceColors.addAll(color.toList())
-                faceVertices.addAll(v1.toList())
                 faceColors.addAll(color.toList())
-                faceVertices.addAll(v2.toList())
                 faceColors.addAll(color.toList())
-            }
-
-            // Create inner star pattern (pentagram)
-            // Find the intersection points of the pentagram
-            val starPoints = mutableListOf<FloatArray>()
-            for (i in 0 until 5) {
-                // Each point of pentagram connects to the vertex 2 positions away
-                val p1 = v[i]
-                val p2 = v[(i + 2) % 5]
-                val p3 = v[(i + 1) % 5]
-                val p4 = v[(i + 3) % 5]
-
-                // Find intersection of lines p1-p2 and p3-p4
-                val intersection = lineIntersection3D(p1, p2, p3, p4, center, normal)
-                starPoints.add(intersection)
-            }
-
-            // Create inner pentagram triangles pointing inward
-            val innerApex = floatArrayOf(
-                center[0] - normal[0] * spikeHeight * 0.3f,
-                center[1] - normal[1] * spikeHeight * 0.3f,
-                center[2] - normal[2] * spikeHeight * 0.3f
-            )
-
-            // Darker color for inner parts
-            val innerColor = floatArrayOf(
-                color[0] * 0.6f,
-                color[1] * 0.6f,
-                color[2] * 0.6f,
-                1.0f
-            )
-
-            for (i in 0 until 5) {
-                val sp1 = starPoints[i]
-                val sp2 = starPoints[(i + 1) % 5]
-
-                faceVertices.addAll(innerApex.toList())
-                faceColors.addAll(innerColor.toList())
-                faceVertices.addAll(sp1.toList())
-                faceColors.addAll(innerColor.toList())
-                faceVertices.addAll(sp2.toList())
-                faceColors.addAll(innerColor.toList())
             }
         }
 
@@ -216,35 +199,6 @@ class StellatedDodecahedronRenderer(res: Resources) {
             a[1] * b[2] - a[2] * b[1],
             a[2] * b[0] - a[0] * b[2],
             a[0] * b[1] - a[1] * b[0]
-        )
-    }
-
-    private fun lineIntersection3D(
-        p1: FloatArray, p2: FloatArray,
-        p3: FloatArray, p4: FloatArray,
-        planePoint: FloatArray, planeNormal: FloatArray
-    ): FloatArray {
-        // Project lines onto the plane and find intersection
-        // Simplified: use parametric intersection
-        val d1 = floatArrayOf(p2[0]-p1[0], p2[1]-p1[1], p2[2]-p1[2])
-        val d2 = floatArrayOf(p4[0]-p3[0], p4[1]-p3[1], p4[2]-p3[2])
-
-        // Find t where the lines are closest
-        val r = floatArrayOf(p1[0]-p3[0], p1[1]-p3[1], p1[2]-p3[2])
-
-        val a = d1[0]*d1[0] + d1[1]*d1[1] + d1[2]*d1[2]
-        val b = d1[0]*d2[0] + d1[1]*d2[1] + d1[2]*d2[2]
-        val c = d2[0]*d2[0] + d2[1]*d2[1] + d2[2]*d2[2]
-        val d = d1[0]*r[0] + d1[1]*r[1] + d1[2]*r[2]
-        val e = d2[0]*r[0] + d2[1]*r[1] + d2[2]*r[2]
-
-        val denom = a*c - b*b
-        val t = if (kotlin.math.abs(denom) > 0.0001f) (b*e - c*d) / denom else 0.5f
-
-        return floatArrayOf(
-            p1[0] + t * d1[0],
-            p1[1] + t * d1[1],
-            p1[2] + t * d1[2]
         )
     }
 
@@ -282,6 +236,7 @@ class StellatedDodecahedronRenderer(res: Resources) {
         projectionMatrix: FloatArray,
     ) {
         Matrix.setIdentityM(_modelMatrix, 0)
+        Matrix.scaleM(_modelMatrix, 0, state.scale, state.scale, state.scale)
         Matrix.rotateM(_modelMatrix, 0, state.rotation.y, 1f, 0f, 0f)
         Matrix.rotateM(_modelMatrix, 0, state.rotation.x, 0f, 1f, 0f)
 

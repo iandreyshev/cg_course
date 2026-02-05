@@ -23,7 +23,7 @@ class StellatedDodecahedronGLRenderer(
     init {
         Matrix.setLookAtM(
             _viewMatrix, 0,
-            0f, 0f, 4f,
+            0f, 0f, 7f,
             0f, 0f, 0f,
             0f, 1f, 0f,
         )
