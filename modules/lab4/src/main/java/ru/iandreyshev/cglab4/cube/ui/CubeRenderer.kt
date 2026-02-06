@@ -1,10 +1,10 @@
-package ru.iandreyshev.cglab4.figure.ui
+package ru.iandreyshev.cglab4.cube.ui
 
 import android.content.res.Resources
 import android.opengl.GLES30
 import android.opengl.Matrix
 import ru.iandreyshev.cglab4.R
-import ru.iandreyshev.cglab4.figure.presentation.FigureState
+import ru.iandreyshev.cglab4.cube.presentation.FigureState
 import ru.iandreyshev.core.createProgramGLES30
 import java.nio.ByteBuffer
 import java.nio.ByteOrder

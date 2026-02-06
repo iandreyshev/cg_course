@@ -12,12 +12,12 @@ import androidx.compose.ui.input.pointer.positionChange
 import androidx.compose.ui.input.pointer.util.VelocityTracker
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.viewmodel.compose.viewModel
-import ru.iandreyshev.cglab4.figure.presentation.FigureViewModel
+import ru.iandreyshev.cglab4.stellateddodecahedron.presentation.StellatedDodecahedronViewModel
 import kotlin.math.sqrt
 
 @Composable
 fun StellatedDodecahedronScreen(
-    viewModel: FigureViewModel = viewModel { FigureViewModel() }
+    viewModel: StellatedDodecahedronViewModel = viewModel { StellatedDodecahedronViewModel() }
 ) {
     val state by viewModel.state
 

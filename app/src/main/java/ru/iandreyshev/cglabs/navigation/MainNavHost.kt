@@ -31,7 +31,8 @@ import ru.iandreyshev.cglab2.ui.viewImages.ViewImagesScreen
 import ru.iandreyshev.cglab3.asteroids.ui.AsteroidsScreen
 import ru.iandreyshev.cglab3.bezier.ui.BezierScreen
 import ru.iandreyshev.cglab3.guide.GuideScreen
-import ru.iandreyshev.cglab4.figure.ui.FigureScreen
+import ru.iandreyshev.cglab4.cube.ui.FigureScreen
+import ru.iandreyshev.cglab4.pentagonalicositetrahedron.ui.PentagonalIcositetrahedronScreen
 import ru.iandreyshev.cglab4.stellateddodecahedron.ui.StellatedDodecahedronScreen
 import ru.iandreyshev.cglabs.menu.MenuScreen
 
@@ -77,7 +78,8 @@ private fun NavGraphBuilder.buildMenuNavigation(navController: NavHostController
             }
             lab(4, "Основы визуализации трехмерных объектов") {
                 task("Куб (черновик)", "", Lab4.Figure)
-                task("Третья звёздчатая форма додекаэдра", "12 пентаграмм, 20 вершин, 30 рёбер", Lab4.StellatedDodecahedron)
+                task("Большой звёздчатый додекаэдр", "12 пентаграмм, 20 вершин, 30 рёбер", Lab4.StellatedDodecahedron)
+                task("Пентагональный икоситетраэдр", "24 пятиугольных грани, 38 вершин, 60 рёбер", Lab4.PentagonalIcositetrahedron)
             }
         }
     }
@@ -177,5 +179,8 @@ private fun NavGraphBuilder.buildLab4Navigation(context: Context) {
     }
     composable<Lab4.StellatedDodecahedron> {
         StellatedDodecahedronScreen()
+    }
+    composable<Lab4.PentagonalIcositetrahedron> {
+        PentagonalIcositetrahedronScreen()
     }
 }

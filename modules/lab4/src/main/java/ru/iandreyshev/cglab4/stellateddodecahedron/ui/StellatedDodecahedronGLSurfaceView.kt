@@ -2,7 +2,7 @@ package ru.iandreyshev.cglab4.stellateddodecahedron.ui
 
 import android.content.Context
 import android.opengl.GLSurfaceView
-import ru.iandreyshev.cglab4.figure.presentation.FigureState
+import ru.iandreyshev.cglab4.stellateddodecahedron.presentation.StellatedDodecahedronState
 
 class StellatedDodecahedronGLSurfaceView(context: Context) : GLSurfaceView(context) {
 
@@ -15,7 +15,7 @@ class StellatedDodecahedronGLSurfaceView(context: Context) : GLSurfaceView(conte
         renderMode = RENDERMODE_CONTINUOUSLY
     }
 
-    fun updateState(state: FigureState) {
+    fun updateState(state: StellatedDodecahedronState) {
         _renderer.updateState(state)
         requestRender()
     }

@@ -4,7 +4,7 @@ import android.content.res.Resources
 import android.opengl.GLES30
 import android.opengl.Matrix
 import ru.iandreyshev.cglab4.R
-import ru.iandreyshev.cglab4.figure.presentation.FigureState
+import ru.iandreyshev.cglab4.stellateddodecahedron.presentation.StellatedDodecahedronState
 import ru.iandreyshev.core.createProgramGLES30
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
@@ -231,7 +231,7 @@ class StellatedDodecahedronRenderer(res: Resources) {
         }
 
     fun draw(
-        state: FigureState,
+        state: StellatedDodecahedronState,
         viewMatrix: FloatArray,
         projectionMatrix: FloatArray,
     ) {

@@ -4,7 +4,7 @@ import android.content.res.Resources
 import android.opengl.GLES30
 import android.opengl.GLSurfaceView
 import android.opengl.Matrix
-import ru.iandreyshev.cglab4.figure.presentation.FigureState
+import ru.iandreyshev.cglab4.stellateddodecahedron.presentation.StellatedDodecahedronState
 import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.opengles.GL10
 
@@ -18,7 +18,7 @@ class StellatedDodecahedronGLRenderer(
     private lateinit var _drawable: StellatedDodecahedronRenderer
 
     @Volatile
-    private var _state = FigureState()
+    private var _state = StellatedDodecahedronState()
 
     init {
         Matrix.setLookAtM(
@@ -47,7 +47,7 @@ class StellatedDodecahedronGLRenderer(
         Matrix.perspectiveM(_projectionMatrix, 0, 45f, aspect, 0.1f, 100f)
     }
 
-    fun updateState(state: FigureState) {
+    fun updateState(state: StellatedDodecahedronState) {
         _state = state
     }
 }

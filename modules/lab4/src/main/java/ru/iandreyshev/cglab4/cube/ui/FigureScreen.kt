@@ -1,4 +1,4 @@
-package ru.iandreyshev.cglab4.figure.ui
+package ru.iandreyshev.cglab4.cube.ui
 
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
@@ -15,7 +15,7 @@ import androidx.compose.ui.input.pointer.positionChange
 import androidx.compose.ui.input.pointer.util.VelocityTracker
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.viewmodel.compose.viewModel
-import ru.iandreyshev.cglab4.figure.presentation.FigureViewModel
+import ru.iandreyshev.cglab4.cube.presentation.FigureViewModel
 import kotlin.math.sqrt
 
 @Composable

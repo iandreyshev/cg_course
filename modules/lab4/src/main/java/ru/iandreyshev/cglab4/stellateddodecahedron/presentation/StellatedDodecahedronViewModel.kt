@@ -1,4 +1,4 @@
-package ru.iandreyshev.cglab4.figure.presentation
+package ru.iandreyshev.cglab4.stellateddodecahedron.presentation
 
 import androidx.compose.ui.geometry.Offset
 import androidx.lifecycle.viewModelScope
@@ -8,8 +8,8 @@ import kotlinx.coroutines.launch
 import ru.iandreyshev.core.BaseViewModel
 import kotlin.math.abs
 
-class FigureViewModel : BaseViewModel<FigureState, Any>(
-    initialState = FigureState()
+class StellatedDodecahedronViewModel : BaseViewModel<StellatedDodecahedronState, Any>(
+    initialState = StellatedDodecahedronState()
 ) {
     private var flingJob: Job? = null
     private val friction = 0.95f

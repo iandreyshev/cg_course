@@ -1,10 +1,10 @@
-package ru.iandreyshev.cglab4.figure.ui
+package ru.iandreyshev.cglab4.cube.ui
 
 import android.content.res.Resources
 import android.opengl.GLES30
 import android.opengl.GLSurfaceView
 import android.opengl.Matrix
-import ru.iandreyshev.cglab4.figure.presentation.FigureState
+import ru.iandreyshev.cglab4.cube.presentation.FigureState
 import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.opengles.GL10
 
