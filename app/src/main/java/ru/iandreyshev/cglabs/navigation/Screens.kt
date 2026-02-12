@@ -46,10 +46,7 @@ object Lab3 {
 
 object Lab4 {
     @Serializable
-    object Figure
-
-    @Serializable
-    object StellatedDodecahedron
+    object Cube
 
     @Serializable
     object PentagonalIcositetrahedron

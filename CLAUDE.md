@@ -8,7 +8,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - **Kotlin:** 2.0.0 | **AGP:** 8.5.0 | **Gradle:** 8.10.2
 - **SDK:** min 28, target/compile 35 | **JVM target:** 11
-- **Deps:** centralized in `gradle/libs.versions.toml`
+- **Deps:** centralized in `gradle/libs.versions.toml` (exception: `kotlin-serialization` plugin version 2.2.0 hardcoded in `app/build.gradle.kts`)
 
 ## Commands
 
@@ -33,7 +33,7 @@ modules/core/  → ru.iandreyshev.core      # BaseViewModel, OpenGL utils, theme
 modules/lab1/  → ru.iandreyshev.cglab1    # 2D Canvas (Initials, Bresenham, House, Hangman)
 modules/lab2/  → ru.iandreyshev.cglab2    # 2D graphics (ImageViewer, Alchemy, StoryEditor)
 modules/lab3/  → ru.iandreyshev.cglab3    # OpenGL intro (Triangle, Bezier, Asteroids)
-modules/lab4/  → ru.iandreyshev.cglab4    # 3D objects (Cube draft, Stellated dodecahedron)
+modules/lab4/  → ru.iandreyshev.cglab4    # 3D objects (Cube draft)
 ```
 
 `modules/libs/ui/` and `modules/libs/utils/` exist but are currently empty.
