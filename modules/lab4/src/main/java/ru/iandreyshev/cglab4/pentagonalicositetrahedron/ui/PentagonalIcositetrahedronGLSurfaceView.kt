@@ -10,7 +10,7 @@ class PentagonalIcositetrahedronGLSurfaceView(context: Context) : GLSurfaceView(
 
     init {
         setEGLContextClientVersion(3)
-        _renderer = PentagonalIcositetrahedronGLSurfaceView(resources)
+        _renderer = PentagonalIcositetrahedronGLRenderer(resources)
         setRenderer(_renderer)
         renderMode = RENDERMODE_WHEN_DIRTY
     }

@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**CGLabs** — Android educational project for a Computer Graphics course. 4 lab modules, Kotlin + Jetpack Compose UI + OpenGL ES 3.0 for 3D.
+**CGLabs** — Android educational project for a Computer Graphics course. 4 lab modules, Kotlin + Jetpack Compose UI + OpenGL ES 3.0 for 3D. UI strings and code comments are in Russian.
 
 - **Kotlin:** 2.0.0 | **AGP:** 8.5.0 | **Gradle:** 8.10.2
 - **SDK:** min 28, target/compile 35 | **JVM target:** 11
@@ -32,8 +32,8 @@ app/           → ru.iandreyshev.cglabs    # Navigation, menu, wires labs toget
 modules/core/  → ru.iandreyshev.core      # BaseViewModel, OpenGL utils, theme, shared code
 modules/lab1/  → ru.iandreyshev.cglab1    # 2D Canvas (Initials, Bresenham, House, Hangman)
 modules/lab2/  → ru.iandreyshev.cglab2    # 2D graphics (ImageViewer, Alchemy, StoryEditor)
-modules/lab3/  → ru.iandreyshev.cglab3    # OpenGL intro (Triangle, Bezier, Asteroids)
-modules/lab4/  → ru.iandreyshev.cglab4    # 3D objects (Cube draft)
+modules/lab3/  → ru.iandreyshev.cglab3    # OpenGL intro (Triangle/Guide, Bezier, Asteroids)
+modules/lab4/  → ru.iandreyshev.cglab4    # 3D objects (Cube, PentagonalIcositetrahedron)
 ```
 
 `modules/libs/ui/` and `modules/libs/utils/` exist but are currently empty.
@@ -53,7 +53,7 @@ All ViewModels extend `core/BaseViewModel`. Key API:
 
 ### Navigation
 
-Type-safe navigation via Kotlinx Serialization. Routes defined as `@Serializable object` in `app/.../navigation/Screens.kt`. Navigation graph in `MainNavHost.kt` is split into builder functions per lab: `buildLab1Navigation()`, `buildLab2Navigation()`, etc.
+Type-safe navigation via Kotlinx Serialization. Routes defined as `@Serializable object` in `app/.../navigation/Screens.kt`, grouped by lab (`Lab1.Initials`, `Lab2.StoryEditor`, etc.). Navigation graph in `MainNavHost.kt` is split into builder functions per lab: `buildLab1Navigation()`, `buildLab2Navigation()`, etc. Each builder receives different parameters depending on lab needs (Context, Resources, DisplayMetrics, NavController).
 
 ### Package Organization (per lab feature)
 
@@ -69,13 +69,15 @@ Type-safe navigation via Kotlinx Serialization. Routes defined as `@Serializable
 
 Shaders in `src/main/res/raw/` with convention `{name}_vert.vert` / `{name}_frag.frag`.
 
-Core utilities:
+Core utilities in `modules/core/`:
 - `createProgramGLES30(resources, @RawRes vertRes, @RawRes fragRes)` — compile & link shader program
 - `Resources.loadShader(type, @RawRes resId)` — load single shader
 - `handleErrorsGLES30()` — log OpenGL errors (tag: "OpenGL")
 - `Color.floatArray()` — Compose Color → `floatArrayOf(r, g, b, a)` for OpenGL
+- `IDragListener` — interface for touch/drag interaction on GLSurfaceView
+- `Math.kt` / `OffsetExt.kt` — geometry helpers (circle intersection, rotation, distance, normalization)
 
-Each OpenGL screen has a custom `GLSurfaceView` subclass and a `GLSurfaceView.Renderer` implementation.
+Each OpenGL screen has a custom `GLSurfaceView` subclass and a `GLSurfaceView.Renderer` implementation. In Lab 4, renderers receive ViewModel state via a `@Volatile var _state` field updated through `updateState(state)`, allowing the Compose ViewModel to drive OpenGL rendering.
 
 ### Menu System
 
@@ -90,7 +92,7 @@ MenuScreen(navController) {
 
 ### Adding a New Task
 
-1. Add `@Serializable object` route in `Screens.kt`
+1. Add `@Serializable object` route in `Screens.kt` (inside the appropriate `Lab{N}` object)
 2. Create screen composable in the lab module
 3. Add `composable<Route> { Screen() }` in the lab's builder function in `MainNavHost.kt`
 4. Add `task(...)` entry in `buildMenuNavigation()`

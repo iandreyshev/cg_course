@@ -22,20 +22,22 @@ class PentagonalIcositetrahedronGLRenderer(
     init {
         Matrix.setLookAtM(
             _viewMatrix, 0,
+            0f, 0f, 5f,
             0f, 0f, 0f,
-            0f, 0f, 0f,
-            0f, 0f, 0f
+            0f, 1f, 0f
         )
     }
 
     override fun onSurfaceCreated(p0: GL10?, p1: EGLConfig?) {
         GLES30.glClearColor(.0f, .0f, 0.0f, 1f)
         GLES30.glEnable(GLES30.GL_DEPTH_TEST)
-        _drawable = PentagonalIcositetrahedronRenderer()
+        GLES30.glEnable(GLES30.GL_BLEND)
+        GLES30.glBlendFunc(GLES30.GL_SRC_ALPHA, GLES30.GL_ONE_MINUS_SRC_ALPHA)
+        _drawable = PentagonalIcositetrahedronRenderer(resources)
     }
 
     override fun onDrawFrame(p0: GL10?) {
-        GLES30.glClear(GLES30.GL_COLOR_BUFFER_BIT or GLES30.GL_COLOR_BUFFER_BIT)
+        GLES30.glClear(GLES30.GL_COLOR_BUFFER_BIT or GLES30.GL_DEPTH_BUFFER_BIT)
         _drawable.draw(_state, _viewMatrix, _projectionMatrix)
     }
 

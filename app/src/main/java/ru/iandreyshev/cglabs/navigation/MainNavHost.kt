@@ -46,7 +46,7 @@ fun MainNavHost(
     NavHost(
         modifier = Modifier,
         navController = navController,
-        startDestination = Menu
+        startDestination = Lab4.PentagonalIcositetrahedron
     ) {
         buildMenuNavigation(navController)
         buildLab1Navigation(displayMetrics, navController)
