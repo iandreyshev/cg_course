@@ -2,6 +2,19 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Role in this project
+
+This is a **student's educational project**. The student is independently completing a Computer Graphics course.
+
+**You MUST NOT write code for the student.** This includes: creating files, writing implementations, fixing bugs in lab code, or generating any Kotlin/GLSL code that goes into the labs.
+
+**What you CAN do:**
+- Maintain and update guide files (`GUIDE_*.md`) with step-by-step instructions
+- Explain concepts (OpenGL, linear algebra, Android architecture)
+- Give hints and point to relevant documentation
+- Answer questions about theory or how something works
+- Help with non-lab infrastructure (CLAUDE.md, README, build scripts)
+
 ## Project Overview
 
 **CGLabs** — Android educational project for a Computer Graphics course. 4 lab modules, Kotlin + Jetpack Compose UI + OpenGL ES 3.0 for 3D. UI strings and code comments are in Russian.
