@@ -33,13 +33,21 @@ class PentagonalIcositetrahedronGLRenderer(
         GLES30.glEnable(GLES30.GL_DEPTH_TEST)
         GLES30.glEnable(GLES30.GL_BLEND)
         GLES30.glBlendFunc(GLES30.GL_SRC_ALPHA, GLES30.GL_ONE_MINUS_SRC_ALPHA)
-        GLES30.glDepthMask(false)
+        GLES30.glEnable(GLES30.GL_CULL_FACE)
         _drawable = PentagonalIcositetrahedronRenderer(resources)
     }
 
     override fun onDrawFrame(p0: GL10?) {
         GLES30.glClear(GLES30.GL_COLOR_BUFFER_BIT or GLES30.GL_DEPTH_BUFFER_BIT)
+
+        GLES30.glDepthMask(false)
+        GLES30.glCullFace(GLES30.GL_FRONT)
         _drawable.draw(_state, _viewMatrix, _projectionMatrix)
+
+        GLES30.glCullFace(GLES30.GL_BACK)
+        _drawable.draw(_state, _viewMatrix, _projectionMatrix)
+
+        GLES30.glDepthMask(true)
     }
 
     override fun onSurfaceChanged(p0: GL10?, width: Int, height: Int) {

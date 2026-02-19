@@ -12,14 +12,16 @@ import java.nio.FloatBuffer
 
 private const val COORDS_PER_VERTEX = 3
 private const val COLORS_PER_VERTEX = 4
+private const val NORMALS_PER_VERTEX = 3
 
 class PentagonalIcositetrahedronRenderer(res: Resources) {
 
     private val vertices: FloatArray
     private val colors: FloatArray
+    private val normals: FloatArray
     private val vertexCount: Int
 
-    private var _program: Int = createProgramGLES30(res, R.raw.cube_vert, R.raw.cube_frag)
+    private var _program: Int = createProgramGLES30(res, R.raw.pent_vert, R.raw.pent_frag)
 
     private val _modelMatrix = FloatArray(16)
     private val _viewModelMatrix = FloatArray(16)
@@ -28,15 +30,19 @@ class PentagonalIcositetrahedronRenderer(res: Resources) {
     private var _mvpMatrixHandle: Int = 0
     private var _positionHandle: Int = 0
     private var _colorHandle: Int = 0
+    private var _modelMatrixHandle: Int = 0
+    private var _normalHandle: Int = 0
+    private var _lightDirHandle: Int = 0
 
     private val _vertexBuffer: FloatBuffer
-
     private val _colorBuffer: FloatBuffer
+    private val _normalBuffer: FloatBuffer
 
     init {
-        val (verts, cols) = generateGeometry()
+        val (verts, cols, norms) = generateGeometry()
         vertices = verts
         colors = cols
+        normals = norms
         vertexCount = vertices.size / COORDS_PER_VERTEX
 
         _vertexBuffer = ByteBuffer.allocateDirect(vertices.size * Float.SIZE_BYTES)
@@ -48,6 +54,11 @@ class PentagonalIcositetrahedronRenderer(res: Resources) {
             .order(ByteOrder.nativeOrder())
             .asFloatBuffer()
             .apply { put(colors); position(0) }
+
+        _normalBuffer = ByteBuffer.allocateDirect(normals.size * Float.SIZE_BYTES)
+            .order(ByteOrder.nativeOrder())
+            .asFloatBuffer()
+            .apply { put(normals); position(0) }
     }
 
     fun draw(
@@ -82,15 +93,29 @@ class PentagonalIcositetrahedronRenderer(res: Resources) {
         _mvpMatrixHandle = GLES30.glGetUniformLocation(_program, "uMVPMatrix")
         GLES30.glUniformMatrix4fv(_mvpMatrixHandle, 1, false, _mvpMatrix, 0)
 
+        _modelMatrixHandle = GLES30.glGetUniformLocation(_program, "uModelMatrix")
+        GLES30.glUniformMatrix4fv(_modelMatrixHandle, 1, false, _modelMatrix, 0)
+
+        _lightDirHandle = GLES30.glGetUniformLocation(_program, "uLightDirection")
+        GLES30.glUniform3f(_lightDirHandle, 0.5f, 1.0f, 0.0f)
+
+        _normalHandle = GLES30.glGetAttribLocation(_program, "vNormal")
+        GLES30.glEnableVertexAttribArray(_normalHandle)
+        GLES30.glVertexAttribPointer(
+            _normalHandle, NORMALS_PER_VERTEX, GLES30.GL_FLOAT,
+            false, NORMALS_PER_VERTEX * Float.SIZE_BYTES, _normalBuffer
+        )
+
         GLES30.glDrawArrays(GLES30.GL_TRIANGLES, 0, vertexCount)
 
         GLES30.glDisableVertexAttribArray(_positionHandle)
         GLES30.glDisableVertexAttribArray(_colorHandle)
+        GLES30.glDisableVertexAttribArray(_normalHandle)
     }
 
 
 
-    private fun generateGeometry(): Pair<FloatArray, FloatArray> {
+    private fun generateGeometry(): Triple<FloatArray, FloatArray, FloatArray> {
         val C0 = 0.2187966430f
         val C1 = 0.7401837414f
         val C2 = 1.0236561781f
@@ -193,6 +218,7 @@ class PentagonalIcositetrahedronRenderer(res: Resources) {
 
         val faceVertices = mutableListOf<Float>()
         val faceColors = mutableListOf<Float>()
+        val faceNormals = mutableListOf<Float>()
 
         facesByVerts.forEachIndexed { faceIndex, face ->
             val faceColor = faceColorPalette[faceIndex]
@@ -216,6 +242,9 @@ class PentagonalIcositetrahedronRenderer(res: Resources) {
                 val tcz = (centroid[2] + centroidB[2] + centroidC[2]) / 3f
                 val dot = normal[0] * tcx + normal[1] * tcy + normal[2] * tcz
 
+                val outNormal = if (dot <= 0) normal
+                else floatArrayOf(-normal[0], -normal[1], -normal[2])
+
                 if (dot >= 0) {
                     faceVertices.addAll(centroid.toList())
                     faceVertices.addAll(centroidB.toList())
@@ -226,13 +255,19 @@ class PentagonalIcositetrahedronRenderer(res: Resources) {
                     faceVertices.addAll(centroidB.toList())
                 }
 
+                repeat(3) { faceNormals.addAll(outNormal.toList()) }
+
                 faceColors.addAll(faceColor.toList())
                 faceColors.addAll(faceColor.toList())
                 faceColors.addAll(faceColor.toList())
             }
         }
 
-        return Pair(faceVertices.toFloatArray(), faceColors.toFloatArray())
+        return Triple(
+            faceVertices.toFloatArray(),
+            faceColors.toFloatArray(),
+            faceNormals.toFloatArray()
+        )
     }
 
     private infix operator fun FloatArray.times(b: FloatArray) = floatArrayOf(

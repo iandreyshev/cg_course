@@ -1524,7 +1524,7 @@ glDepthMask(true)
 
 # Шаг 7. Точечный источник света
 
-**Цель:** заменить направленный свет (`uLightDirection`) на точечный источник (`uLightPosition`). Точечный источник имеет позицию в пространстве — грани дальше от него получают меньше света (затухание).
+**Цель:** заменить направленный свет (`uLightDirection`) на точечный источник (`uLightPosition`). Точечный источник имеет позицию в пространстве — грани дальше от него получают меньше света (затухание). Источник анимирован — вращается вокруг фигуры.
 
 ## Отличие направленного и точечного света
 
@@ -1532,75 +1532,450 @@ glDepthMask(true)
 |---|---|---|
 | Задаётся | Вектором направления | Позицией в мире |
 | Изменяется с расстоянием | Нет | Да (затухание) |
+| Направление света | Одинаковое для всех точек | Своё для каждой точки (от точки к источнику) |
 | Пример | Солнце | Лампочка |
 
-## 7.1. Вершинный шейдер — передаём позицию фрагмента
+Новый файл на этом шаге:
 
-Точечному свету нужно знать, где находится каждый фрагмент (пиксель) в мировом пространстве.
+```
+modules/lab4/src/main/java/ru/iandreyshev/cglab4/
+└── pentagonalicositetrahedron/
+    └── ui/
+        └── LightSourceRenderer.kt   ← NEW: рисует видимую «лампочку»
+```
 
-В `pent_vert.vert` добавь:
-- `varying vec3 fWorldPos` — позиция вершины в мировом пространстве
-- В `main()`: `fWorldPos = vec3(uModelMatrix * vPosition)` — трансформируем позицию через Model-матрицу
+## 7.1. Вершинный шейдер — передаём позицию фрагмента в мировых координатах
+
+Точечному свету нужно знать, где находится каждый фрагмент (пиксель) в **мировом** пространстве, чтобы вычислить направление и расстояние до источника.
+
+Замени содержимое `pent_vert.vert` полностью:
+
+```glsl
+uniform mat4 uMVPMatrix;
+uniform mat4 uModelMatrix;
+
+attribute vec4 vPosition;
+attribute vec4 vColor;
+attribute vec3 vNormal;
+
+varying vec4 fColor;
+varying vec3 fNormal;
+varying vec3 fWorldPos;    // NEW: позиция фрагмента в мировых координатах
+
+void main() {
+    gl_Position = uMVPMatrix * vPosition;
+    fColor = vColor;
+    fNormal = mat3(uModelMatrix) * vNormal;
+    // Трансформируем позицию вершины в мировое пространство через Model-матрицу.
+    // vec3(...) — берём только xyz (w нам не нужен).
+    fWorldPos = vec3(uModelMatrix * vPosition);    // NEW
+}
+```
+
+Что нового:
+- `varying vec3 fWorldPos` — интерполированная мировая позиция. `varying` значит, что GPU автоматически интерполирует значение между вершинами для каждого пикселя внутри треугольника.
+- `uModelMatrix * vPosition` — переводим координаты вершины из локального пространства модели в мировое. Важно: именно `uModelMatrix` (без View/Projection), потому что источник света тоже задан в мировых координатах.
 
 ## 7.2. Фрагментный шейдер — точечный свет с затуханием
 
-В `pent_frag.frag` замени `uLightDirection` на `uLightPosition` (тип `vec3`), добавь `fWorldPos`.
+Замени содержимое `pent_frag.frag` полностью:
 
-Новая формула освещения:
+```glsl
+precision mediump float;
+
+uniform vec3 uLightPosition;    // позиция источника в мировых координатах
+
+varying vec4 fColor;
+varying vec3 fNormal;
+varying vec3 fWorldPos;         // позиция фрагмента в мировых координатах
+
+void main() {
+    vec3 normal = normalize(fNormal);
+
+    // Направление ОТ фрагмента К источнику света.
+    // Для направленного света (шаг 5) это был фиксированный вектор.
+    // Для точечного — своё для каждого пикселя.
+    vec3 lightDir = normalize(uLightPosition - fWorldPos);
+
+    // Диффузное освещение (Ламберт)
+    float diffuse = max(dot(normal, lightDir), 0.0);
+
+    // Затухание: свет слабеет с расстоянием от источника.
+    // Формула: 1 / (1 + k_linear * d + k_quadratic * d²)
+    //   - При d=0: attenuation = 1.0 (максимум)
+    //   - При d→∞: attenuation → 0
+    //   - k_linear (0.09) — линейное затухание
+    //   - k_quadratic (0.032) — квадратичное затухание (доминирует на больших расстояниях)
+    float dist = length(uLightPosition - fWorldPos);
+    float attenuation = 1.0 / (1.0 + 0.09 * dist + 0.032 * dist * dist);
+
+    // ambient (0.15) — минимальное фоновое освещение, чтобы теневая сторона
+    // не была полностью чёрной. Меньше чем на шаге 5 (было 0.3),
+    // потому что точечный свет с затуханием и так делает сцену темнее.
+    float ambient = 0.15;
+    float brightness = (ambient + (1.0 - ambient) * diffuse) * attenuation;
+
+    gl_FragColor = vec4(fColor.rgb * brightness, fColor.a);
+}
 ```
-vec3 lightDir = normalize(uLightPosition - fWorldPos);
-float diffuse = max(dot(normal, lightDir), 0.0);
-```
 
-Направление теперь **от фрагмента к источнику**, а не глобальный вектор.
-
-### Затухание (attenuation)
-
-Физически свет затухает обратно пропорционально квадрату расстояния. Упрощённая формула:
+Разбор формулы затухания:
 
 ```
-float dist = length(uLightPosition - fWorldPos);
-float attenuation = 1.0 / (1.0 + 0.1 * dist + 0.05 * dist * dist);
-float brightness = (ambient + (1.0 - ambient) * diffuse) * attenuation;
+attenuation = 1.0 / (1.0 + 0.09 * d + 0.032 * d²)
+
+d = 0   → 1.0 / 1.0 = 1.00  (рядом с источником — полный свет)
+d = 2   → 1.0 / 1.31 ≈ 0.76
+d = 5   → 1.0 / 2.25 ≈ 0.44
+d = 10  → 1.0 / 5.10 ≈ 0.20  (далеко — свет тусклый)
 ```
 
-Коэффициенты `0.1` (линейный) и `0.05` (квадратичный) можно подбирать. Маленькие значения — свет достигает далеко, большие — быстро гаснет.
+Коэффициенты `0.09` и `0.032` подобраны для расстояния источника ~3-4 единицы от фигуры. Если источник ближе — уменьшай коэффициенты (иначе слишком темно). Если дальше — увеличивай (иначе затухание незаметно).
 
-## 7.3. Renderer — меняем uniform
+## 7.3. State — добавляем угол вращения источника
 
-В `draw` замени:
+В `PentagonalIcositetrahedronState` добавь поле `lightAngle`:
+
 ```kotlin
-GLES30.glUniform3f(_lightDirHandle, 0.5f, 1.0f, 0.8f)
+data class PentagonalIcositetrahedronState(
+    val rotationMatrix: FloatArray = FloatArray(16).apply {
+        Matrix.setIdentityM(this, 0)
+    },
+    val velocity: Offset = Offset.Zero,
+    val scale: Float = 0.5f,
+    val lightAngle: Float = 0f,    // NEW: угол вращения источника света (в радианах)
+)
 ```
 
-на передачу позиции источника, например `(2.0, 3.0, 4.0)` — источник сверху-справа-спереди в мировых координатах.
+## 7.4. ViewModel — анимация вращения источника
 
-Обнови `_lightDirHandle` → `_lightPosHandle` и имя uniform в шейдере.
+Добавь в `PentagonalIcositetrahedronViewModel` корутину, которая непрерывно увеличивает `lightAngle`:
 
-## 7.4. Видимый источник — маленькая сфера или точка
-
-Для наглядности можно нарисовать сам источник света в сцене — маленькую белую сферу или точку в позиции `uLightPosition`. Это отдельный объект с собственным рендерером и простым шейдером без освещения (свет сам по себе всегда белый и яркий).
-
-Добавь в `GLRenderer`:
-- Отдельный `_lightRenderer` с позицией источника
-- Рисуй его после основного объекта: `_lightRenderer.draw(lightPosition, _viewMatrix, _projectionMatrix)`
-
-## 7.5. Анимация источника
-
-Вращение источника вокруг объекта делает освещение живым. Добавь в State:
-```
-val lightAngle: Float = 0f
-```
-Обновляй его в корутине (как velocity в шаге 3). Позиция источника:
 ```kotlin
-val lx = cos(lightAngle) * 4f
-val lz = sin(lightAngle) * 4f
-// y — фиксированный, например 2.0
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+
+// Внутри класса, в блоке init:
+init {
+    viewModelScope.launch {
+        while (true) {
+            updateState {
+                // 0.02 рад/кадр ≈ 1.15°/кадр ≈ один полный оборот за ~5.2 секунды
+                copy(lightAngle = lightAngle + 0.02f)
+            }
+            delay(16)  // ~60 FPS
+        }
+    }
+}
 ```
 
-## 7.6. Проверка
+Скорость `0.02f` рад/кадр — один оборот за `2π / 0.02 ≈ 314` кадров ≈ 5 секунд. Если хочешь медленнее — уменьши (например, `0.01f` — 10 секунд на оборот). Быстрее — увеличь.
 
-Запусти — тени стали «следовать» за позицией источника. Если добавил анимацию — источник облетает фигуру и тени перемещаются в реальном времени.
+Корутина запускается в `viewModelScope` — автоматически отменится при уничтожении ViewModel (когда пользователь уходит с экрана).
+
+## 7.5. Renderer — обновляем `draw`, передаём позицию света
+
+В `PentagonalIcositetrahedronRenderer` меняем handle и метод `draw`:
+
+**1. Переименовываем handle:**
+
+```kotlin
+// Было:
+private var _lightDirHandle: Int = 0
+
+// Стало:
+private var _lightPosHandle: Int = 0
+```
+
+**2. Добавляем параметр `lightPosition` в `draw`.** Вот полный обновлённый метод (изменённые строки помечены `// CHANGED`):
+
+```kotlin
+    fun draw(
+        state: PentagonalIcositetrahedronState,
+        viewMatrix: FloatArray,
+        projectionMatrix: FloatArray,
+        lightPosition: FloatArray,     // CHANGED: новый параметр — [x, y, z]
+    ) {
+        Matrix.setIdentityM(_modelMatrix, 0)
+        Matrix.scaleM(_modelMatrix, 0, state.scale, state.scale, state.scale)
+        val scaledModel = _modelMatrix.copyOf()
+        Matrix.multiplyMM(_modelMatrix, 0, scaledModel, 0, state.rotationMatrix, 0)
+
+        Matrix.multiplyMM(_viewModelMatrix, 0, viewMatrix, 0, _modelMatrix, 0)
+        Matrix.multiplyMM(_mvpMatrix, 0, projectionMatrix, 0, _viewModelMatrix, 0)
+
+        GLES30.glUseProgram(_program)
+
+        _positionHandle = GLES30.glGetAttribLocation(_program, "vPosition")
+        GLES30.glEnableVertexAttribArray(_positionHandle)
+        GLES30.glVertexAttribPointer(
+            _positionHandle, COORDS_PER_VERTEX, GLES30.GL_FLOAT,
+            false, COORDS_PER_VERTEX * Float.SIZE_BYTES, _vertexBuffer,
+        )
+
+        _colorHandle = GLES30.glGetAttribLocation(_program, "vColor")
+        GLES30.glEnableVertexAttribArray(_colorHandle)
+        GLES30.glVertexAttribPointer(
+            _colorHandle, COLORS_PER_VERTEX, GLES30.GL_FLOAT,
+            false, COLORS_PER_VERTEX * Float.SIZE_BYTES, _colorBuffer,
+        )
+
+        _mvpMatrixHandle = GLES30.glGetUniformLocation(_program, "uMVPMatrix")
+        GLES30.glUniformMatrix4fv(_mvpMatrixHandle, 1, false, _mvpMatrix, 0)
+
+        _modelMatrixHandle = GLES30.glGetUniformLocation(_program, "uModelMatrix")
+        GLES30.glUniformMatrix4fv(_modelMatrixHandle, 1, false, _modelMatrix, 0)
+
+        // CHANGED: передаём позицию источника вместо направления
+        _lightPosHandle = GLES30.glGetUniformLocation(_program, "uLightPosition")
+        GLES30.glUniform3f(_lightPosHandle, lightPosition[0], lightPosition[1], lightPosition[2])
+
+        _normalHandle = GLES30.glGetAttribLocation(_program, "vNormal")
+        GLES30.glEnableVertexAttribArray(_normalHandle)
+        GLES30.glVertexAttribPointer(
+            _normalHandle, NORMALS_PER_VERTEX, GLES30.GL_FLOAT,
+            false, NORMALS_PER_VERTEX * Float.SIZE_BYTES, _normalBuffer
+        )
+
+        GLES30.glDrawArrays(GLES30.GL_TRIANGLES, 0, vertexCount)
+
+        GLES30.glDisableVertexAttribArray(_positionHandle)
+        GLES30.glDisableVertexAttribArray(_colorHandle)
+        GLES30.glDisableVertexAttribArray(_normalHandle)
+    }
+```
+
+Изменения по сравнению с шагом 5:
+- Параметр `lightPosition: FloatArray` — массив из 3 float (x, y, z). Позиция вычисляется в GLRenderer и передаётся сюда.
+- `glGetUniformLocation(_program, "uLightPosition")` — имя uniform изменилось с `uLightDirection` на `uLightPosition`.
+- `glUniform3f` теперь передаёт координаты из массива, а не хардкод.
+
+## 7.6. LightSourceRenderer — видимый источник света
+
+Для наглядности нарисуем сам источник — маленький белый **октаэдр** (8 граней, 6 вершин). Он рисуется без освещения — свет сам по себе всегда яркий.
+
+Создай файл `ui/LightSourceRenderer.kt`:
+
+```kotlin
+package ru.iandreyshev.cglab4.pentagonalicositetrahedron.ui
+
+import android.content.res.Resources
+import android.opengl.GLES30
+import android.opengl.Matrix
+import ru.iandreyshev.cglab4.R
+import ru.iandreyshev.core.createProgramGLES30
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
+import java.nio.FloatBuffer
+
+class LightSourceRenderer(res: Resources) {
+
+    // Октаэдр — 6 вершин, 8 треугольных граней = 24 вершины
+    // Размер 1.0 — масштабируем при отрисовке
+    private val vertices = floatArrayOf(
+        // Верхние 4 грани (вершина +Y)
+         0f,  1f,  0f,    1f,  0f,  0f,    0f,  0f,  1f,  // верх, +X, +Z
+         0f,  1f,  0f,    0f,  0f,  1f,   -1f,  0f,  0f,  // верх, +Z, -X
+         0f,  1f,  0f,   -1f,  0f,  0f,    0f,  0f, -1f,  // верх, -X, -Z
+         0f,  1f,  0f,    0f,  0f, -1f,    1f,  0f,  0f,  // верх, -Z, +X
+        // Нижние 4 грани (вершина -Y)
+         0f, -1f,  0f,    0f,  0f,  1f,    1f,  0f,  0f,  // низ, +Z, +X
+         0f, -1f,  0f,   -1f,  0f,  0f,    0f,  0f,  1f,  // низ, -X, +Z
+         0f, -1f,  0f,    0f,  0f, -1f,   -1f,  0f,  0f,  // низ, -Z, -X
+         0f, -1f,  0f,    1f,  0f,  0f,    0f,  0f, -1f,  // низ, +X, -Z
+    )
+
+    // Все вершины белые (свет — всегда яркий)
+    private val colors = FloatArray(24 * 4) { i ->
+        if (i % 4 == 3) 1.0f else 1.0f  // RGBA = (1, 1, 1, 1)
+    }
+
+    private val vertexCount = vertices.size / 3
+
+    // Используем шейдеры куба — простые, без освещения
+    private var _program = createProgramGLES30(res, R.raw.cube_vert, R.raw.cube_frag)
+
+    private val _modelMatrix = FloatArray(16)
+    private val _viewModelMatrix = FloatArray(16)
+    private val _mvpMatrix = FloatArray(16)
+
+    private val _vertexBuffer: FloatBuffer = ByteBuffer
+        .allocateDirect(vertices.size * Float.SIZE_BYTES)
+        .order(ByteOrder.nativeOrder())
+        .asFloatBuffer()
+        .apply { put(vertices); position(0) }
+
+    private val _colorBuffer: FloatBuffer = ByteBuffer
+        .allocateDirect(colors.size * Float.SIZE_BYTES)
+        .order(ByteOrder.nativeOrder())
+        .asFloatBuffer()
+        .apply { put(colors); position(0) }
+
+    /**
+     * @param position — мировая позиция источника [x, y, z]
+     * @param scale — размер (0.05-0.1 для маленькой «лампочки»)
+     */
+    fun draw(
+        position: FloatArray,
+        scale: Float,
+        viewMatrix: FloatArray,
+        projectionMatrix: FloatArray,
+    ) {
+        // Model-матрица: сдвигаем в позицию источника и масштабируем
+        Matrix.setIdentityM(_modelMatrix, 0)
+        Matrix.translateM(_modelMatrix, 0, position[0], position[1], position[2])
+        Matrix.scaleM(_modelMatrix, 0, scale, scale, scale)
+
+        Matrix.multiplyMM(_viewModelMatrix, 0, viewMatrix, 0, _modelMatrix, 0)
+        Matrix.multiplyMM(_mvpMatrix, 0, projectionMatrix, 0, _viewModelMatrix, 0)
+
+        GLES30.glUseProgram(_program)
+
+        val posHandle = GLES30.glGetAttribLocation(_program, "vPosition")
+        GLES30.glEnableVertexAttribArray(posHandle)
+        GLES30.glVertexAttribPointer(
+            posHandle, 3, GLES30.GL_FLOAT,
+            false, 3 * Float.SIZE_BYTES, _vertexBuffer,
+        )
+
+        val colorHandle = GLES30.glGetAttribLocation(_program, "vColor")
+        GLES30.glEnableVertexAttribArray(colorHandle)
+        GLES30.glVertexAttribPointer(
+            colorHandle, 4, GLES30.GL_FLOAT,
+            false, 4 * Float.SIZE_BYTES, _colorBuffer,
+        )
+
+        val mvpHandle = GLES30.glGetUniformLocation(_program, "uMVPMatrix")
+        GLES30.glUniformMatrix4fv(mvpHandle, 1, false, _mvpMatrix, 0)
+
+        GLES30.glDrawArrays(GLES30.GL_TRIANGLES, 0, vertexCount)
+
+        GLES30.glDisableVertexAttribArray(posHandle)
+        GLES30.glDisableVertexAttribArray(colorHandle)
+    }
+}
+```
+
+Октаэдр — простейшее «сферическое» тело: 6 вершин на осях (±1, 0, 0), (0, ±1, 0), (0, 0, ±1), соединённых в 8 треугольников. Порядок обхода нижних граней обратный верхним — все нормали смотрят наружу.
+
+`translateM` сдвигает октаэдр в позицию источника. `scaleM` уменьшает до нужного размера. Шейдеры куба (`cube_vert`/`cube_frag`) подходят идеально — они принимают позицию и цвет без освещения.
+
+## 7.7. GLRenderer — вычисляем позицию света и рисуем оба объекта
+
+Обновляем `PentagonalIcositetrahedronGLRenderer`. Вот полная версия файла:
+
+```kotlin
+package ru.iandreyshev.cglab4.pentagonalicositetrahedron.ui
+
+import android.content.res.Resources
+import android.opengl.GLES30
+import android.opengl.GLSurfaceView
+import android.opengl.Matrix
+import ru.iandreyshev.cglab4.pentagonalicositetrahedron.presentation.PentagonalIcositetrahedronState
+import javax.microedition.khronos.egl.EGLConfig
+import javax.microedition.khronos.opengles.GL10
+import kotlin.math.cos
+import kotlin.math.sin
+
+class PentagonalIcositetrahedronGLRenderer(
+    private val resources: Resources
+) : GLSurfaceView.Renderer {
+
+    private val _projectionMatrix = FloatArray(16)
+    private val _viewMatrix = FloatArray(16)
+
+    private lateinit var _drawable: PentagonalIcositetrahedronRenderer
+    private lateinit var _lightRenderer: LightSourceRenderer  // NEW
+
+    @Volatile
+    private var _state = PentagonalIcositetrahedronState()
+
+    init {
+        Matrix.setLookAtM(
+            _viewMatrix, 0,
+            0f, 0f, 5f,
+            0f, 0f, 0f,
+            0f, 1f, 0f
+        )
+    }
+
+    override fun onSurfaceCreated(p0: GL10?, p1: EGLConfig?) {
+        GLES30.glClearColor(.0f, .0f, 0.0f, 1f)
+        GLES30.glEnable(GLES30.GL_DEPTH_TEST)
+        GLES30.glEnable(GLES30.GL_BLEND)
+        GLES30.glBlendFunc(GLES30.GL_SRC_ALPHA, GLES30.GL_ONE_MINUS_SRC_ALPHA)
+        GLES30.glEnable(GLES30.GL_CULL_FACE)
+        _drawable = PentagonalIcositetrahedronRenderer(resources)
+        _lightRenderer = LightSourceRenderer(resources)  // NEW
+    }
+
+    override fun onDrawFrame(p0: GL10?) {
+        GLES30.glClear(GLES30.GL_COLOR_BUFFER_BIT or GLES30.GL_DEPTH_BUFFER_BIT)
+
+        // NEW: вычисляем позицию источника света из угла в State.
+        // Источник вращается по кругу радиуса 3 в плоскости XZ, на высоте Y=2.
+        val angle = _state.lightAngle
+        val lightPosition = floatArrayOf(
+            cos(angle) * 3f,   // x
+            2f,                // y (фиксированная высота)
+            sin(angle) * 3f    // z
+        )
+
+        // Двухпроходная отрисовка фигуры (как на шаге 6)
+        GLES30.glDepthMask(false)
+        GLES30.glCullFace(GLES30.GL_FRONT)
+        _drawable.draw(_state, _viewMatrix, _projectionMatrix, lightPosition)  // CHANGED
+
+        GLES30.glCullFace(GLES30.GL_BACK)
+        _drawable.draw(_state, _viewMatrix, _projectionMatrix, lightPosition)  // CHANGED
+
+        GLES30.glDepthMask(true)
+
+        // NEW: рисуем видимый источник света (маленький белый октаэдр).
+        // Рисуем ПОСЛЕ фигуры и с включённым depthMask — «лампочка» непрозрачная
+        // и корректно перекрывается/перекрывает фигуру.
+        _lightRenderer.draw(lightPosition, 0.08f, _viewMatrix, _projectionMatrix)
+    }
+
+    override fun onSurfaceChanged(p0: GL10?, width: Int, height: Int) {
+        GLES30.glViewport(0, 0, width, height)
+        val aspect = width.toFloat() / height.toFloat()
+        Matrix.perspectiveM(_projectionMatrix, 0, 45f, aspect, 0.1f, 100f)
+    }
+
+    fun updateState(state: PentagonalIcositetrahedronState) {
+        _state = state
+    }
+}
+```
+
+Что нового:
+- `_lightRenderer` — второй рендерер для видимого источника света. Создаётся в `onSurfaceCreated` рядом с основным.
+- `lightPosition` — вычисляется каждый кадр из `_state.lightAngle`. Формулы: `x = cos(angle) * R`, `z = sin(angle) * R`, `y = const`. Радиус `3f` — источник на расстоянии 3 от центра. Высота `2f` — чуть выше фигуры.
+- `_drawable.draw(...)` теперь получает `lightPosition` четвёртым параметром.
+- `_lightRenderer.draw(...)` — рисуется после фигуры, с `glDepthMask(true)` — маленький белый октаэдр непрозрачный и корректно перекрывается фигурой (или перекрывает её, если ближе к камере).
+- `0.08f` — масштаб «лампочки». Маленькая точка, не отвлекает от фигуры. Можешь увеличить до `0.15f`, если хочешь заметнее.
+
+## 7.8. Проверка
+
+```bash
+./gradlew assembleDebug
+```
+
+Запусти — вокруг фигуры летает маленькая белая точка. Тени перемещаются в реальном времени: грани, обращённые к источнику, яркие; отвернувшиеся — тёмные. Ближние к источнику грани ярче дальних (затухание).
+
+Поверни фигуру пальцем — свет продолжает вращаться независимо. Масштабируй — «лампочка» остаётся на месте в мировых координатах (не масштабируется вместе с фигурой).
+
+### Что подкрутить, если что-то выглядит не так
+
+| Проблема | Что менять |
+|----------|-----------|
+| Слишком темно | Уменьшить коэффициенты затухания в шейдере (0.09 → 0.05, 0.032 → 0.01) или увеличить ambient (0.15 → 0.25) |
+| Затухание незаметно | Увеличить коэффициенты (0.09 → 0.15, 0.032 → 0.05) |
+| Свет слишком быстро/медленно | Изменить шаг угла в ViewModel (0.02 → 0.01 медленнее, 0.04 быстрее) |
+| «Лампочка» слишком маленькая/большая | Изменить scale в `_lightRenderer.draw(...)` (0.08 → 0.15 больше) |
+| Свет слишком близко/далеко | Изменить радиус в GLRenderer (3f → 4f дальше, 2f ближе) |
 
 ---
 
@@ -1617,4 +1992,6 @@ val lz = sin(lightAngle) * 4f
 | 4 | Multitouch | Определение pinch через расстояние между двумя пальцами |
 | 5 | Диффузное освещение | Модель Ламберта: яркость = cos(угол между нормалью и светом) |
 | 6 | Прозрачность | `glEnable(GL_BLEND)` + alpha-канал + двухпроходный рендеринг для выпуклого объекта |
-| 7 | Точечный источник | Позиция вместо направления, затухание по расстоянию |
+| 7 | Точечный источник | Позиция вместо направления, затухание `1/(1 + kd + kd²)` |
+| 7 | Анимация в сцене | Корутина в ViewModel крутит угол, GLRenderer вычисляет позицию |
+| 7 | Несколько объектов | Два рендерера (фигура + лампочка) рисуются в одном кадре |
