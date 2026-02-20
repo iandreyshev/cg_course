@@ -2,11 +2,25 @@ package ru.iandreyshev.cglab4.pentagonalicositetrahedron.presentation
 
 import android.opengl.Matrix
 import androidx.compose.ui.geometry.Offset
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import ru.iandreyshev.core.BaseViewModel
 
 class PentagonalIcositetrahedronViewModel : BaseViewModel<PentagonalIcositetrahedronState, Any>(
     initialState = PentagonalIcositetrahedronState()
 ) {
+
+    init {
+        viewModelScope.launch {
+            while (true) {
+                updateState {
+                    copy(lightAngle = lightAngle + 0.02f)
+                }
+                delay(16)
+            }
+        }
+    }
 
     fun onDrag(dragAmount: Offset) {
         updateState {

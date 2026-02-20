@@ -32,7 +32,7 @@ class PentagonalIcositetrahedronRenderer(res: Resources) {
     private var _colorHandle: Int = 0
     private var _modelMatrixHandle: Int = 0
     private var _normalHandle: Int = 0
-    private var _lightDirHandle: Int = 0
+    private var _lightPosHandle: Int = 0
 
     private val _vertexBuffer: FloatBuffer
     private val _colorBuffer: FloatBuffer
@@ -65,6 +65,7 @@ class PentagonalIcositetrahedronRenderer(res: Resources) {
         state: PentagonalIcositetrahedronState,
         viewMatrix: FloatArray,
         projectionMatrix: FloatArray,
+        lightPosition: FloatArray
     ) {
         Matrix.setIdentityM(_modelMatrix, 0)
         Matrix.scaleM(_modelMatrix, 0, state.scale, state.scale, state.scale)
@@ -96,8 +97,8 @@ class PentagonalIcositetrahedronRenderer(res: Resources) {
         _modelMatrixHandle = GLES30.glGetUniformLocation(_program, "uModelMatrix")
         GLES30.glUniformMatrix4fv(_modelMatrixHandle, 1, false, _modelMatrix, 0)
 
-        _lightDirHandle = GLES30.glGetUniformLocation(_program, "uLightDirection")
-        GLES30.glUniform3f(_lightDirHandle, 0.5f, 1.0f, 0.0f)
+        _lightPosHandle = GLES30.glGetUniformLocation(_program, "uLightPosition")
+        GLES30.glUniform3f(_lightPosHandle, lightPosition[0], lightPosition[1], lightPosition[2])
 
         _normalHandle = GLES30.glGetAttribLocation(_program, "vNormal")
         GLES30.glEnableVertexAttribArray(_normalHandle)
@@ -242,7 +243,7 @@ class PentagonalIcositetrahedronRenderer(res: Resources) {
                 val tcz = (centroid[2] + centroidB[2] + centroidC[2]) / 3f
                 val dot = normal[0] * tcx + normal[1] * tcy + normal[2] * tcz
 
-                val outNormal = if (dot <= 0) normal
+                val outNormal = if (dot >= 0) normal
                 else floatArrayOf(-normal[0], -normal[1], -normal[2])
 
                 if (dot >= 0) {

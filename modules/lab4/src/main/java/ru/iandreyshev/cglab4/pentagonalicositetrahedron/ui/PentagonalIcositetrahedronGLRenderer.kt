@@ -7,6 +7,8 @@ import android.opengl.Matrix
 import ru.iandreyshev.cglab4.pentagonalicositetrahedron.presentation.PentagonalIcositetrahedronState
 import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.opengles.GL10
+import kotlin.math.cos
+import kotlin.math.sin
 
 class PentagonalIcositetrahedronGLRenderer(
     private val resources: Resources
@@ -16,6 +18,7 @@ class PentagonalIcositetrahedronGLRenderer(
     private val _viewMatrix = FloatArray(16)
 
     private lateinit var _drawable: PentagonalIcositetrahedronRenderer
+    private lateinit var _lightRenderer: LightSourceRenderer
 
     private var _state = PentagonalIcositetrahedronState()
 
@@ -35,19 +38,25 @@ class PentagonalIcositetrahedronGLRenderer(
         GLES30.glBlendFunc(GLES30.GL_SRC_ALPHA, GLES30.GL_ONE_MINUS_SRC_ALPHA)
         GLES30.glEnable(GLES30.GL_CULL_FACE)
         _drawable = PentagonalIcositetrahedronRenderer(resources)
+        _lightRenderer = LightSourceRenderer(resources)
     }
 
     override fun onDrawFrame(p0: GL10?) {
         GLES30.glClear(GLES30.GL_COLOR_BUFFER_BIT or GLES30.GL_DEPTH_BUFFER_BIT)
 
+        val angle = _state.lightAngle
+        val lightPosition = floatArrayOf(cos(angle) * 3f, 2f, sin(angle) * 3f)
+
         GLES30.glDepthMask(false)
         GLES30.glCullFace(GLES30.GL_FRONT)
-        _drawable.draw(_state, _viewMatrix, _projectionMatrix)
+        _drawable.draw(_state, _viewMatrix, _projectionMatrix, lightPosition)
 
         GLES30.glCullFace(GLES30.GL_BACK)
-        _drawable.draw(_state, _viewMatrix, _projectionMatrix)
+        _drawable.draw(_state, _viewMatrix, _projectionMatrix, lightPosition)
 
         GLES30.glDepthMask(true)
+
+        _lightRenderer.draw(lightPosition, 0.08f, _viewMatrix, _projectionMatrix)
     }
 
     override fun onSurfaceChanged(p0: GL10?, width: Int, height: Int) {

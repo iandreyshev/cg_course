@@ -50,4 +50,7 @@ object Lab4 {
 
     @Serializable
     object PentagonalIcositetrahedron
+
+    @Serializable
+    object Mobius
 }

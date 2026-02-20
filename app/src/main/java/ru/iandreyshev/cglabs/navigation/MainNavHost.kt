@@ -32,6 +32,7 @@ import ru.iandreyshev.cglab3.asteroids.ui.AsteroidsScreen
 import ru.iandreyshev.cglab3.bezier.ui.BezierScreen
 import ru.iandreyshev.cglab3.guide.GuideScreen
 import ru.iandreyshev.cglab4.cube.ui.FigureScreen
+import ru.iandreyshev.cglab4.mobius.MobiusScreen
 import ru.iandreyshev.cglab4.pentagonalicositetrahedron.ui.PentagonalIcositetrahedronScreen
 import ru.iandreyshev.cglabs.menu.MenuScreen
 
@@ -46,7 +47,7 @@ fun MainNavHost(
     NavHost(
         modifier = Modifier,
         navController = navController,
-        startDestination = Lab4.PentagonalIcositetrahedron
+        startDestination = Lab4.Mobius
     ) {
         buildMenuNavigation(navController)
         buildLab1Navigation(displayMetrics, navController)
@@ -78,6 +79,7 @@ private fun NavGraphBuilder.buildMenuNavigation(navController: NavHostController
             lab(4, "Основы визуализации трехмерных объектов") {
                 task("Куб (черновик)", "", Lab4.Cube)
                 task("Пентагональный икоситетраэдр", "", Lab4.PentagonalIcositetrahedron)
+                task("Лента Мобиуса", "Неориентируемая поверхность с одной стороной", Lab4.Mobius)
             }
         }
     }
@@ -177,5 +179,8 @@ private fun NavGraphBuilder.buildLab4Navigation(context: Context) {
     }
     composable<Lab4.PentagonalIcositetrahedron> {
         PentagonalIcositetrahedronScreen()
+    }
+    composable<Lab4.Mobius> {
+        MobiusScreen()
     }
 }

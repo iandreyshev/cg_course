@@ -8,5 +8,6 @@ data class PentagonalIcositetrahedronState(
         Matrix.setIdentityM(this, 0)
     },
     val velocity: Offset = Offset.Zero,
-    val scale: Float = 0.5f
+    val scale: Float = 0.5f,
+    val lightAngle: Float = 0f,
 )
